@@ -21,12 +21,14 @@ runpart2: iml trader
 	./trader 2 > output.txt &
 	sleep 1
 	./iml inputs/data2.txt
+	sleep 5
 	diff -Bw outputs/out2.txt output.txt
 
 runpart3: iml trader
 	./trader 3 > output.txt &
 	sleep 1
 	./iml inputs/data3.txt
+	sleep 5
 	diff -Bw outputs/out3.txt output.txt
 
 clean:
