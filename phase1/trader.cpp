@@ -14,12 +14,13 @@ int stringSplit(string& message, vector<string>& splits, vector<string>& orders,
 	while (flags)
 	{
 		temp = "";
-		while (message[i] != ' ' && message[i] != '\n') {
+		while (message[i] != ' ' && message[i] != '\n' && message[i] != '$') {
 			temp += message[i];
-			if (message[i] != '#' && message[i] != '$') order += message[i++];
+			if (message[i] != '#') order += message[i];
+			i++;
 		}
 		if (temp != "") splits.push_back(temp);
-		if (message[i] == '\n') flags = 0; else order += ' ';
+		if (message[i] == '\n' || message[i] == '$') flags = 0; else order += ' ';
 		i++;
 	}
 	if (order[order.length() - 1] == 'b') order[order.length() - 1] = 's';
@@ -93,9 +94,9 @@ int main(int argc, char* argv[]) {
 		while (k < message.length()) {
 			vector<string> splits;
 			k = stringSplit(message, splits, orders, k);
-			for (int j = 0; j < splits.size(); j++) cerr << splits[j] << "\n";
 			int n = splits.size();
-			people.push_back(vector<int>(stocks.size(), stoi(splits[n-2])));
+			people.push_back(vector<int>(stocks.size(), 0));
+			people.back()[0] = stoi(splits[n-2]);
 			for (int i = 0; i < n-2; i += 2) {
 				bool flags = 0;
 				for (int j = 1; j < stocks.size(); j++) if (splits[i] == stocks[j].name) {
@@ -119,21 +120,24 @@ int main(int argc, char* argv[]) {
 		bool flags = 1;
 		vector<uint8_t> maxIncl;
 		int maxProfit = 0;
-		cerr << "Initialized the matrix.\n";
 
 		while (flags) {
 			int i = 0;
 			vector<int> resultant(m, 0);
 			while (i < n) {
-				for (int j = 0; j < m; j++) resultant[j] += included[i]*people[i][j];;
+				for (int j = 0; j < m; j++) resultant[j] += included[i]*people[i][j];
+				i++;
 			}
 			bool acceptable = 1;
 			for (int j = 1; j < m; j++) if (resultant[j] != 0) acceptable = 0;
 			if (acceptable) {
-				if (resultant[0] > maxProfit) maxIncl = included;
+				if (resultant[0] > maxProfit) {
+					maxIncl = included;
+					maxProfit = resultant[0];
+				}
 			}
 			i--;
-			while (i > 0 && included[i] != 0) included[i--] = 0;
+			while (i >= 0 && included[i] != 0) included[i--] = 0;
 			if (i == -1) flags = 0;
 			else included[i] = 1;
 		}
@@ -146,12 +150,13 @@ int main(int argc, char* argv[]) {
 			for (int j = 1; j < m; j++) {resultant[j] += people[i][j]; if (resultant[j] != 0) flags = 0;}
 			if (flags) {
 				for (int j = i; j >= 0; j--) if (maxIncl[j] == 1) {
-					cout << orders[j] << "\n";
+					cout << orders[j] << "#\n";
 					maxIncl[j] = 0;
 				}
 			}
 			else cout << "No Trade\n";
 		}
+		cout << maxProfit << "\n";
 	}
 
 	if (argv[1][0] == '3') {
