@@ -140,6 +140,7 @@ int main(int argc, char* argv[]) {
 			if (splits[n-1][0] == 's') {
 				for (int j = 0; j < stocks.size(); j++) people->val[j] *= -1;
 			}
+			// ADDED ENTRY FOR NEW PERSON
 
 			T = people->next;
 			auto prev = people;
