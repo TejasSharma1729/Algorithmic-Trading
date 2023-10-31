@@ -13,7 +13,7 @@ public:
 	void insert(pair<T, U> data);
 	iterator find(T key);
 	iterator begin();
-	iterator rbegin(); // Use -- to go leftwards. Not ++.
+	iterator end(); // Use -- to go leftwards. Not ++. Also this is rbegin not outside.
 	U at(T key);
 	U& operator [] (T key); // Initializes to 0 and accepts not-in-dict values.
 	U remove(T key);
@@ -106,7 +106,6 @@ template <typename V>
 			}
 		}
 
-
 		U* find(T k) {
 			if (k == key) return &val;
 			if (k > key) {
@@ -141,10 +140,9 @@ template <typename V>
 		}
 
 		Tuple<rbNode> remove(T k) {
-			T k1 = key;
 			U v = val;
 			int8_t side; // side in which something was removed.
-			if (k1 == k) {
+			if (k == key) {
 				if (right == nullptr) {
 					rbNode* temp = parent;
 					if (left != nullptr) left->parent = temp;
@@ -194,14 +192,45 @@ template <typename V>
 				else {
 					rbNode* temp = right;
 					while (temp->left != nullptr) temp = temp->left;
-					key = temp->key;
-					val = temp->val;
-					temp->val = v;
-					temp->key = k;
-					return temp->remove(k);
+					if (temp == right) side = 1; else side = -1;
+
+					rbNode* rit = temp->right;
+					if (parent != nullptr) {
+						if (parent->left == this) parent->left = temp; else parent->right = temp;
+					}
+					else side *= 3;
+					if (side > 0) 
+					{
+						temp->parent = parent;
+						left->parent = temp;
+						temp->left = left;
+						if (temp->color == 1) {
+							if (side == 3) side = 6;
+							else side = 0;
+						}
+						temp->color = color; 
+						delete this;
+						return {temp, v, side};
+					}
+
+					rbNode* par = temp->parent;
+					temp->parent = parent;
+					right->parent = temp;
+					left->parent = temp;
+					temp->right = right;
+					temp->left = left;
+					if (temp->color == 1) {
+						if (side == -3) side = 6;
+						else side = 0;
+					}
+					temp->color = color;
+					par->left = rit;
+					if (rit != nullptr) rit->parent = par;
+					delete this;
+					return {par, v, side};
 				}
 			}
-			else if (k < k1) {
+			else if (k < key) {
 				if (left != nullptr) return left->remove(k);
 				else throw invalid_argument("\nDelete Nonexistant Key: "+to_string(key)+" Error");
 			}
@@ -386,11 +415,34 @@ public:
 		bool isNull() {return node == nullptr;}
 		T key() {return node->key;}
 		U val() {return node->val;}
+
+		bool isBegin() {
+			if (node == nullptr) return 1;
+			if (node->left != nullptr) return 0;
+			auto s = node;
+			while (s->parent != nullptr) {
+				if (s->parent->right == s) return 0;
+				s = s->parent;
+			}
+			return 1;
+		}
+
+		bool isEnd() {
+			if (node == nullptr) return 1;
+			if (node->right != nullptr) return 0;
+			auto s = node;
+			while (s->parent != nullptr) {
+				if (s->parent->left == s) return 0;
+				s = s->parent;
+			}
+			return 1;
+		}
 		
 		iterator(rbNode* s) {
 			node = s;
 		}
 		~iterator() {}
+		
 		iterator operator ++() {
 			if (node == nullptr) return iterator(nullptr);
 			else if (node->right != nullptr) {
@@ -512,7 +564,7 @@ public:
 		return iterator(s);
 	}
 
-	iterator rbegin() {
+	iterator end() {
 		if (root == nullptr) return iterator(nullptr);
 		rbNode* s = root;
 		while (s->right != nullptr) s = s->right;
@@ -555,6 +607,15 @@ public:
 		Tuple<rbNode> temp = root->remove(key);
 		length--;
 		if (temp.third == 2) root = temp.first;
+		else if (temp.third == 3 || temp.third == -3 || temp.third == 6) 
+		{
+			auto s = temp.first;
+			while (s->parent != nullptr) s = s->parent;
+			root = s;
+			temp.third /= 3;
+			if (temp.third == 2) temp.third = 0;
+			balanceDelete(temp.first, temp.third);
+		}
 		else balanceDelete(temp.first, temp.third);
 		return temp.second;
 	}
