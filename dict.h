@@ -25,6 +25,8 @@ public:
 		T key();
 		U val();
 		bool isNull();
+		bool isBegin();
+		bool isEnd();
 		operator ++, --, +=, -=;
 	}
 
@@ -108,7 +110,7 @@ template <typename V>
 
 		U* find(T k) {
 			if (k == key) return &val;
-			if (k > key) {
+			if (key < k) {
 				if (right == nullptr) return nullptr;
 				return right->find(k);
 			}
