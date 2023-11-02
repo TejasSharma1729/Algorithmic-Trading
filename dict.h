@@ -1,8 +1,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstdlib>
 using namespace std;
+
+template <typename T, typename U>
+struct Pair {
+	T first;
+	U second;
+};
 
 /*
 template <typename T, typename U>
@@ -10,7 +15,7 @@ class dict {
 public:
 	dict();
 	~dict(); // Destroys everything. Careful when passing tree by value.
-	void insert(pair<T, U> data);
+	void insert(Pair<T, U> data);
 	iterator find(T key);
 	iterator begin();
 	iterator end(); // Use -- to go leftwards. Not ++. Also this is rbegin not outside.
@@ -108,8 +113,8 @@ template <typename V>
 			}
 		}
 
-		U* find(T k) {
-			if (k == key) return &val;
+		rbNode* find(T k) {
+			if (k == key) return this;
 			if (key < k) {
 				if (right == nullptr) return nullptr;
 				return right->find(k);
@@ -120,9 +125,9 @@ template <typename V>
 			}
 		}
 
-		rbNode* insert(pair<T, U> data) {
+		rbNode* insert(Pair<T, U> data) {
 			if (data.first == key) 
-			throw invalid_argument("\nDuplicate Entries for " + to_string(data.first) + " Error");
+			throw invalid_argument("\nDuplicate Entries Error");
 			if (data.first < key) {
 				if (left == nullptr) {
 					left = new rbNode(data.first, data.second);
@@ -234,11 +239,11 @@ template <typename V>
 			}
 			else if (k < key) {
 				if (left != nullptr) return left->remove(k);
-				else throw invalid_argument("\nDelete Nonexistant Key: "+to_string(key)+" Error");
+				else throw invalid_argument("\nDelete Nonexistant Key Error");
 			}
 			else {
 				if (right != nullptr) return right->remove(k);
-				else throw invalid_argument("\nDelete Nonexistant Key: "+to_string(key)+" Error");
+				else throw invalid_argument("\nDelete Nonexistant Key Error");
 			}
 		}
 
@@ -548,9 +553,9 @@ public:
 	};
 
 	U at(T key) {
-		if (root == nullptr) throw invalid_argument("\nNot Found : " + to_string(key) + " Error");
-		U* val = (root->find(key));
-		if (val == nullptr) throw invalid_argument("\nNot Found : " + to_string(key) + " Error");
+		if (root == nullptr) throw invalid_argument("\nNot Found Error");
+		rbNode* val = (root->find(key));
+		if (val == nullptr) throw invalid_argument("\nNot Found Error");
 		return *val;
 	}
 
@@ -580,24 +585,24 @@ public:
 			length++;
 			return root->val;
 		}
-		U* val = (root->find(key));
-		if (val == nullptr) {
+		rbNode* n = (root->find(key));
+		if (n == nullptr) {
 			rbNode* temp = root->insert({key, U()});
 			length++;
 			balanceInsert(temp);
 			return temp->val;
 		}
-		return *val;
+		return n->val;
 	}
 
-	void insert(pair<T, U> data) {
+	void insert(T k, U v) {
 		if (root == nullptr) {
 			length++;
-			root = new rbNode(data.first, data.second);
+			root = new rbNode(k, v);
 			root->color = 0;
 		}
 		else {
-			rbNode* temp = root->insert(data);
+			rbNode* temp = root->insert({k, v});
 			length++;
 			balanceInsert(temp);
 		}
@@ -605,7 +610,7 @@ public:
 
 	U remove(T key) {
 		if (root == nullptr) 
-			throw invalid_argument("\nDelete Nonexistant Key: "+to_string(key)+" Error");
+			throw invalid_argument("\nDelete Nonexistant Key Error");
 		Tuple<rbNode> temp = root->remove(key);
 		length--;
 		if (temp.third == 2) root = temp.first;
