@@ -10,30 +10,42 @@ struct Pair {
 };
 
 /*
-template <typename T, typename U>
-class dict {
+template <typename T, typename U> class dict {
 public:
 	dict();
-	~dict(); // Destroys everything. Careful when passing tree by value.
-	void insert(Pair<T, U> data);
-	iterator find(T key);
-	iterator begin();
-	iterator end(); // Use -- to go leftwards. Not ++. Also this is rbegin not outside.
+	void obliterate(); // Deletes all and makes it empty dict. Use before dict out of scope, like dynamic array.
+	~dict();
+	void insert(T key, U val); 
+		// Error if double insertion
+	iterator find(T key); 
+		// Null iterator if not found.
+	iterator begin(); 
+		// Smallest element Null iterator if empty dict. ++ rightwards.
+	iterator end(); 
+		// Use -- to go leftwards. Not ++. Also this is rbegin (largest element) not outside.
 	U at(T key);
-	U& operator [] (T key); // Initializes to 0 and accepts not-in-dict values.
+	U& operator [] (T key); 
+		// Not found: nitializes to 0 and accepts not-in-dict values.
 	U remove(T key);
 	int size();
 	bool empty();
 
 	class iterator {
+	private:
 		rbNode* node;
-		T key();
-		U val();
-		bool isNull();
-		bool isBegin();
+	public:
+		T& key();
+		U& val();
+		bool isNull(); 
+			// Forward/Backward out of range etc.
+		bool isBegin(); 
+			// 1 if null or smallest element.
 		bool isEnd();
-		operator ++, --, +=, -=;
-	}
+		operator ++, --, +=, -=; 
+			// forward 1, backward 1, (n times)
+	};
+	// Works well and iterates in order (when ++, -- ..) after insertion and deletion too.
+	// WARNING: Undefined Behaviour of Iterator when it points to element just deleted.
 
 private:
 	struct rbNode {
@@ -43,12 +55,13 @@ private:
 		rbNode* left;
 		rbNode* right;
 		rbNode* parent;
-		rbNode(T k, U v): key{k}, val{v};
-		~rbNode();
 	};
 	rbNode* root;
 	int length;
 };
+// IT IS SINGLEMAP, WELL ORDERED KEY WITH == AND < DEFINED AND ANY NON-VOID VALUE 
+// SUGGESTIONS: Set: boolean value (false?) or int8_t;   Multiset: int/uint (for no. of entries), remove if 0, first insertion 1;
+// Map: the usual value_datatype;   Multimap: vector<value_datatype>, remove if empty, first insertion add element.
 */
 
 template <typename T, typename U>
@@ -412,7 +425,12 @@ template <typename V>
 
 public:
 	dict() {root = nullptr; length = 0;}
-	~dict() {if (root != nullptr) root->destroy();}
+	void obliterate() {
+		if (root != nullptr) root->destroy();
+		root = nullptr;
+		length = 0;
+	}
+	~dict() {}
 	int size() {return length;}
 	bool empty() {return (length == 0);}
 
@@ -420,8 +438,8 @@ public:
 		rbNode* node;
 	public:
 		bool isNull() {return node == nullptr;}
-		T key() {return node->key;}
-		U val() {return node->val;}
+		T& key() {return node->key;}
+		U& val() {return node->val;}
 
 		bool isBegin() {
 			if (node == nullptr) return 1;
