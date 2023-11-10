@@ -30,9 +30,20 @@ class market
 		}
 	};
 
+	struct personOrders {
+		int bought = 0;
+		int sold = 0;
+		long obtained = 0;
+	};
+	dict<string, personOrders> peoples;
+	long netExchange;
+	int numTrades;
+	long numSharedTrades;
+
 	struct stock {
 		vector<string> name;
 		vector<int> quant;
+		int numTransacted;
 		dict<order, int> bookBuy;
 		dict<int, dict<order, bool>> timeExpBuy;
 		dict<order, int> bookSell;
@@ -51,12 +62,10 @@ class market
 			for (auto itr = out.begin(); !itr.isNull(); itr++) {
 				bookBuy.remove(itr.key());
 			}
-			out.obliterate();
 			out = timeExpSell[t];
 			for (auto itr = out.begin(); !itr.isNull(); itr++) {
 				bookSell.remove(itr.key());
 			}
-			out.obliterate();
 			timeExpBuy.remove(t);
 			timeExpSell.remove(t);
 			return;
@@ -88,22 +97,35 @@ class market
 			}
 		}
 
-		void transact() {
+		void transact(dict<string, personOrders>& peoples, long& netExchange, int& numTrades, long& numSharedTrades) {
 			vector<order> bought;
 			vector<order> sold;
 			auto itr = bookBuy.end();
 			auto jtr = bookSell.end();
 			while (!itr.isNull() && !jtr.isNull()) {
-				if (itr.key().price >= jtr.key().price) {
+				if (itr.key().price >= jtr.key().price) 
+				{
 					int q1 = itr.key().qty;
 					int q2 = jtr.key().qty;
 					int price;
 					if (jtr.key().line > itr.key().line) price = itr.key().price; else price = jtr.key().price;
+
 					if (q2 > q1) {
 						cout << itr.key().person << " purchased ";
 						printname(q1);
-						cout << " from " << jtr.key().person << " for $" << price << "/share\n";
+						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
 						bought.push_back(itr.key());
+
+						auto& A = peoples[itr.key().person];
+						A.bought = numTransacted*q1;
+						A.obtained -= price*q1;
+						auto& B = peoples[jtr.key().person];
+						B.sold += numTransacted*q1;
+						B.obtained += price*q1;
+						netExchange += price*q1;
+						numTrades++;
+						numSharedTrades += numTransacted*q1;
+
 						auto ktr = timeExpSell.find(jtr.val());
 						int x = jtr.key().qty - q1;
 						ktr.val().find(jtr.key()).key().qty = x;
@@ -113,8 +135,19 @@ class market
 					else if (q1 > q2) {
 						cout << itr.key().person << " purchased ";
 						printname(q2);
-						cout << " from " << jtr.key().person << " for $" << price << "/share\n";
+						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
 						sold.push_back(jtr.key());
+
+						auto& A = peoples[itr.key().person];
+						A.bought += numTransacted*q2;
+						A.obtained -= price*q2;
+						auto& B = peoples[jtr.key().person];
+						B.sold += numTransacted*q2;
+						B.obtained += price*q2;
+						netExchange += price*q2;
+						numTrades++;
+						numSharedTrades += numTransacted*q2;
+
 						auto ktr = timeExpBuy.find(itr.val());
 						int x = itr.key().qty - q2;
 						ktr.val().find(itr.key()).key().qty = x;
@@ -124,7 +157,18 @@ class market
 					else {
 						cout << itr.key().person << " purchased ";
 						printname(q1);
-						cout << " from " << jtr.key().person << " for $" << price << "/share\n";
+						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
+
+						auto& A = peoples[itr.key().person];
+						A.bought += numTransacted*q1;
+						A.obtained -= price*q1;
+						auto& B = peoples[jtr.key().person];
+						B.sold += numTransacted*q1;
+						B.obtained += price*q1;
+						netExchange += price*q1;
+						numTrades++;
+						numSharedTrades += numTransacted*q1;
+
 						bought.push_back(itr.key());
 						sold.push_back(jtr.key());
 						--itr;
@@ -167,7 +211,7 @@ class market
 	};
 	dict<stock, bool> stocks;
 
-	int split(string message, int prevT);
+	int split(string message, int prevT, int line);
 
 public:
 	market(int argc, char** argv);

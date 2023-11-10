@@ -13,8 +13,10 @@ struct Pair {
 template <typename T, typename U> class dict {
 public:
 	dict();
-	void obliterate(); // Deletes all and makes it empty dict. Use before dict out of scope, like dynamic array.
+	operator = (dict& Oth);
+	dict(dict& Oth);
 	~dict();
+		// Takes care of destruction of dictionary itself.
 	void insert(T key, U val); 
 		// Error if double insertion
 	iterator find(T key); 
@@ -89,11 +91,21 @@ template <typename V>
 			color = 1;
 		}
 
+		rbNode* copy() {
+			rbNode* temp = new rbNode(key, val);
+			temp->color = color;
+			if (left != nullptr) temp->left = left->copy();
+			else temp->left = nullptr;
+			if (right != nullptr) temp->right = right->copy();
+			else temp->right = nullptr;
+			return temp;
+		}
 		void destroy() {
 			if (left != nullptr) left->destroy();
 			if (right != nullptr) right->destroy();
 			delete this;
 		}
+
 		void rotate(int side) {
 			if (side == -1) { // left side goes to top
 				if (left == nullptr) return;
@@ -425,12 +437,23 @@ template <typename V>
 
 public:
 	dict() {root = nullptr; length = 0;}
-	void obliterate() {
+	dict(dict& Oth) {
+		if (Oth.root == root) return;
+		length = Oth.length;
+		if (Oth.root != nullptr) root = Oth.root->copy();
+		else root = nullptr;
+	}
+	void operator = (dict& Oth) {
+		if (Oth.root == root) return;
+		length = Oth.length;
+		if (Oth.root != nullptr) root = Oth.root->copy();
+		else root = nullptr;
+	}
+	~dict() {
 		if (root != nullptr) root->destroy();
 		root = nullptr;
 		length = 0;
 	}
-	~dict() {}
 	int size() {return length;}
 	bool empty() {return (length == 0);}
 

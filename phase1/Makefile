@@ -5,10 +5,10 @@
 all: trader iml
 
 trader: trader.cpp receiver.h
-	g++ -std=c++20 trader.cpp -o trader
+	g++ -g -Wall -Wextra -Wpedantic -std=c++20 trader.cpp -o trader
 
 iml: iml.cpp
-	g++ -std=c++20 iml.cpp -o iml
+	g++ -g -Wall -Wextra -Wpedantic -std=c++20 iml.cpp -o iml
 
 runpart1: iml trader
 	./trader 1 > output.txt &
