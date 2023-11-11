@@ -19,8 +19,8 @@ struct stock {
 
 struct stockLowHigh {
 	int price = 0;
-	dict<int, bool> buy;
-	dict<int, bool> sell;
+	int buy = 0;
+	int sell = INT_MAX;
 };
 
 string stringSplit(string message, vector<string>& splits) {
@@ -66,57 +66,39 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 		stockLowHigh& j = stocks[stockName];
 
 		if (bs == 'b') {
-			if (!j.sell.find(price).isNull()) {
+			if (j.price >= price) {
 				cout << "No Trade\n";
-				j.sell.remove(price);
-				return;
-			}
-			j.buy[price] = false;
-			auto itr = j.buy.find(price);
-			if (!itr.isNull()) {
-				auto jtr = itr;
-				--jtr;
-				while (!jtr.isNull()) {
-					j.buy.remove(jtr.key());
-					jtr = itr;
-					--jtr;
+				if (j.buy < price) {
+					j.buy = price;
 				}
 			}
-			if (price > j.price) {
+			else if (j.sell == price) {
+				cout << "No Trade\n";
+				j.sell = INT_MAX;
+			}
+			else if (j.buy > price) cout << "No Trade\n";
+			else {
 				cout << stockName << " " << price << " s\n";
 				j.price = price;
 			}
-			else {
-				cout << "No Trade\n";
-			}
-			return;
 		}
 		else {
-			if (!j.buy.find(price).isNull()) {
+			if (j.price <= price) {
 				cout << "No Trade\n";
-				j.buy.remove(price);
-				return;
-			}
-			j.sell[price] = false;
-			auto itr = j.sell.find(price);
-			if (!itr.isNull()) {
-				auto jtr = itr;
-				++jtr;
-				while (!jtr.isNull()) {
-					j.sell.remove(jtr.key());
-					jtr = itr;
-					++jtr;
+				if (j.sell > price) {
+					j.sell = price;
 				}
 			}
-			if (price < j.price) {
+			else if (j.buy == price) {
+				cout << "No Trade\n";
+				j.buy = 0;
+			}
+			else if (j.sell < price) cout << "No Trade\n";
+			else {
 				cout << stockName << " " << price << " b\n";
 				j.price = price;
 			}
-			else {
-				cout << "No Trade\n";
-			}
-			return;
-		} 
+		}
 	}   
 	else {
 		stocks[stockName].price = price;
@@ -315,22 +297,39 @@ int main(int argc, char* argv[]) {
 	int peps = 0;
 	
 	// For part 3 -- Order Book Processing
+	int x = 0;
 
 	while (flags) {
 		if (message == "") {
 			message = rcv.readIML();
+			i = 0;
 			continue;
 		}
 		
-		while (message[i] != 13 && message[i] != 0 && message[i] != 10) order += message[i++];
-		if (message[i-1] == '$') flags = 0;
+		while (i < message.length() && (message[i] != 13 && message[i] != 0 && message[i] != 10)) order += message[i++];
+		if (message[i] != 13 && message[i] != 10 && message[i] != 0) {
+			message = "";
+			continue;
+		}
+		if (message[i-1] == '$') {
+			flags = 0;
+			if (message[i-2] == 13 || message[i-2] == 0 || message[i-2] == 10) break;
+		}
 		if (message[i] == 13 || message[i] == 0 || message[i] == 10) 
 		{
-			if (argv[1][0] == '1') buyLowSellHigh(order, stocksLowHigh);
-			if (argv[1][0] == '2') arbitrage(order, stocksArbitrage, people, orders, FinalProfit, peps);
-			if (argv[1][0] == '3') orderBook(order); // You can add parameters
-			while (message[i] == 13 || message[i] == 0 || message[i] == 10) i++;
+			if (order != "") {
+				if (argv[1][0] == '1') buyLowSellHigh(order, stocksLowHigh);
+				else if (argv[1][0] == '2') arbitrage(order, stocksArbitrage, people, orders, FinalProfit, peps);
+				else if (argv[1][0] == '3') orderBook(order); // You can add parameters
+				else cout << order << "\n";
+			}
 			order = "";
+			while (i < message.length() && (message[i] == 13 || message[i] == 0 || message[i] == 10)) i++;
+			if (i == message.length()) {
+				message = "";
+				continue;
+			}
+			x++;
 			continue;
 		}
 		message = rcv.readIML();

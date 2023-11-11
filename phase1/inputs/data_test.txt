@@ -1,0 +1,8 @@
+ASML 40 s#
+ASML 30 s#
+ASML 40 s#
+ASML 30 s#
+ASML 70 b#
+ASML 60 b#
+ASML 30 b#
+ASML 30 s#
