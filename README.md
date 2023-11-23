@@ -93,7 +93,7 @@ In this part, we improve the trading strategies that we developed in the previou
 *    Each order must be inserted with the expiration equal to the minimum time to expiry left amongst all the orders we wish to accept. Additionally, ensure that you are not creating self-arbitrage opportunities, as described above.
 *    Additionally, maintain a moving median price (much like you have done for the market, right? Right?), sell above the median, and buy below the median.
 *    As an observation, compute the difference between your projected profit and the actual profit and try to explain this difference (this will not be graded, obviously).
-*    Use the client name corresponding to your team - rollno1_rollno2 (or roll no for solo)
+*    Use the client name corresponding to your team - rollno1\_rollno2 (or roll no for solo)
 
 ### The Dilemma
 In this part, the core strategies remain the same as in the previous part. However, we must sacrifice some power of the previous strategies to better our execution. Hence, in this part, you must ONLY determine arbitrage, in time asymptotically polynomial to input magnitude. This could result in reduced profits, but that's the price we must pay for execution.
@@ -133,7 +133,7 @@ _P.S.: Depending on your OS, you may have to change the template code slightly t
 ## Submission Instructions
 This project is to be done in groups of **at most two students**. Each team should submit one tarball named &lt;rollno1&gt;\_&lt;rollno2&gt;.tar.gz on Moodle, where all letters should be in lowercase. On untarring, we should get a folder named &lt;rollno1\_rollno2&gt;. Inside, there should be 3 sub-folders, labeled 'phase 1', 'phase 2', and 'phase 3', each sub-folder containing only the files you have created + files you were supposed to modify within each phase. NO other files can be included. Do NOT include any Makefile in your submission. Refer to the following directory structure:
 ```
-rollno1\_rollno2
+rollno1_rollno2
 |
 |--- phase1
 |    |--- <all modified code files>
