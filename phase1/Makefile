@@ -33,4 +33,5 @@ runpart3: iml trader
 
 clean:
 	rm -rf output.txt trader iml
+	rm -rf *.dSYM
 	rm -rf *~
