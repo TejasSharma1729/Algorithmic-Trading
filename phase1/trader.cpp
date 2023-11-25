@@ -74,14 +74,14 @@ int8_t combiSplit(string message, vector<int>& current, vector<string>& names, D
 		while (message[i] != ' ') temp += message[i++]; i++;
 		while (message[i] != ' ') num += message[i++]; i++;
 		bool flags = 1;
-		for (int j = 0; j < names.size(); j++) {
+		for (int j = 0; j < (int)names.size(); j++) {
 			if (names[j] == temp) {current[j] = stoi(num); flags = 0;}
 		}
 		if (flags) {
 			names.push_back(temp);
 			current.push_back(stoi(num));
 			for (auto itr = linComb.begin(); !itr.isNull(); itr++) itr.key().push_back(0);
-			for (int j = 0; j < history.size(); j++) history[j].first.push_back(0);
+			for (int j = 0; j < (int)history.size(); j++) history[j].first.push_back(0);
 		}
 		order += temp;
 		order += ' ';
@@ -177,7 +177,7 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 	people->val[0] = stoi(splits[n-2]);
 	for (int i = 0; i < n-2; i += 2) {
 		bool flags = 0;
-		for (int j = 1; j < stocks.size(); j++) if (splits[i] == stocks[j].name) {
+		for (int j = 1; j < (int)stocks.size(); j++) if (splits[i] == stocks[j].name) {
 			flags = 1;
 			people->val[j] = stoi(splits[i+1]);
 			break;
@@ -193,7 +193,7 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 		}
 	}
 	if (splits[n-1][0] == 's') {
-		for (int j = 0; j < stocks.size(); j++) people->val[j] *= -1;
+		for (int j = 0; j < (int)stocks.size(); j++) people->val[j] *= -1;
 	}
 	// ADDED ENTRY FOR NEW PERSON
 
@@ -205,7 +205,7 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 	while (T != nullptr) { 
 		bool flags = 1;
 		bool cancel = 1;
-		for (int j = 0; j < stocks.size(); j++) {
+		for (int j = 0; j < (int)stocks.size(); j++) {
 			if (j != 0 && T->val[j] != people->val[j]) flags = 0;
 			if (T->val[j] + people->val[j] != 0) cancel = 0;
 		}
@@ -323,7 +323,6 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 	int price = 0;
 	int qty = 0;
 	int8_t buySell = combiSplit(order, current, names, linComb, history, price, qty);
-	int8_t opposTrans = 1 - buySell;
 
 	if (buySell) {
 		auto itr = linComb[current].first.find(price);
@@ -361,7 +360,7 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 	vector<dict<int, int>> profits(linComb.size());
 	vector<Pair<int, int>> limits(linComb.size());
 	auto itr = linComb.begin();
-	for (int i = 0; i < linComb.size(); i++)
+	for (int i = 0; i < (int)linComb.size(); i++)
 	{
 		auto Dict_J = itr.val().first;
 		auto Dict_K = itr.val().second;
@@ -436,7 +435,7 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 	// The Main Exponential Part begins here.
 	vector<int> finale(linComb.size(), 0);
 	vector<int> thisComb(linComb.size(), 0);
-	for (int i = 0; i < linComb.size(); i++) thisComb[i] = limits[i].first;
+	for (int i = 0; i < (int)linComb.size(); i++) thisComb[i] = limits[i].first;
 	bool flags = 1;
 	int mainProfit = 0;
 
@@ -446,13 +445,13 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 
 		int i = 0;
 		auto itr = linComb.begin();
-		while (i < linComb.size())
+		while (i < (int)linComb.size())
 		{
 			impliedProfit += profits[i][thisComb[i]];
-			for (int j = 0; j < names.size(); j++) implication[j] += thisComb[i]*itr.key()[j];
+			for (int j = 0; j < (int)names.size(); j++) implication[j] += thisComb[i]*itr.key()[j];
 			++itr; i++;
 		}
-		for (int j = 0; j < names.size(); j++) if (implication[j] != 0) flags = 0;
+		for (int j = 0; j < (int)names.size(); j++) if (implication[j] != 0) flags = 0;
 		if (flags && mainProfit < impliedProfit) {
 			mainProfit = impliedProfit;
 			finale = thisComb;
@@ -471,7 +470,7 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 		return;
 	}
 	FinalProfit += mainProfit;
-	for (int i = history.size() - 1; i >= 0; i--) {
+	for (int i = (int)history.size() - 1; i >= 0; i--) {
 		auto itr = linComb.begin();
 		int j = 0;
 		while (!itr.isNull()) 
@@ -607,8 +606,8 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 
 int main(int argc, char* argv[]) {
 	// For all parts
+	if (argc != 2) throw invalid_argument("\nUsage: ./trader <1, 2 or 3>");
 	Receiver rcv;
-	int lineCount = 0;
 	int i = 0;
 	string message = rcv.readIML();
 	string order = "";
@@ -636,7 +635,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		
-		while (i < message.length() && (message[i] != 13 && message[i] != 0 && message[i] != 10)) order += message[i++];
+		while (i < (int)message.length() && (message[i] != 13 && message[i] != 0 && message[i] != 10)) order += message[i++];
 		if (message[i] != 13 && message[i] != 10 && message[i] != 0) {
 			message = "";
 			continue;
@@ -654,8 +653,8 @@ int main(int argc, char* argv[]) {
 				else cout << order << "\n";
 			}
 			order = "";
-			while (i < message.length() && (message[i] == 13 || message[i] == 0 || message[i] == 10)) i++;
-			if (i == message.length()) {
+			while (i < (int)message.length() && (message[i] == 13 || message[i] == 0 || message[i] == 10)) i++;
+			if (i == (int)message.length()) {
 				message = "";
 				continue;
 			}
