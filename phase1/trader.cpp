@@ -159,14 +159,16 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 	}
 }
 
-void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, ptr<string>& orders, int& FinalProfit, int& peps) {
-	
+void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8_t>>& people, ptr<string>& orders, int& FinalProfit, int& peps) {
 	vector<string> splits;
 	string order = stringSplit(message, splits);
 	int n = splits.size();
-	auto T = new node<vector<int>>;
+	auto T = new node<Pair<vector<int>, int8_t>>;
 	auto U = new node<string>;
-	T->val.resize(stocks.size(), 0);
+	T->val.first.resize(stocks.size(), 0);
+	// Notation: 0 == Buy Order, 1 == Sell Order.
+
+	T->val.second = 0;
 	T->next = people;
 	U->val = order;
 	U->next = orders;
@@ -174,26 +176,27 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 	orders = U;
 	peps++;
 
-	people->val[0] = stoi(splits[n-2]);
+	people->val.first[0] = stoi(splits[n-2]);
 	for (int i = 0; i < n-2; i += 2) {
 		bool flags = 0;
 		for (int j = 1; j < (int)stocks.size(); j++) if (splits[i] == stocks[j].name) {
 			flags = 1;
-			people->val[j] = stoi(splits[i+1]);
+			people->val.first[j] = stoi(splits[i+1]);
 			break;
 		}
 		if (!flags) {
 			stocks.push_back({splits[i], i/2+1});
 			T = people;
 			while (T != nullptr) { 
-				T->val.push_back(0);
+				T->val.first.push_back(0);
 				T = T->next;
 			}
-			people->val[stocks.size()-1] = stoi(splits[i+1]);
+			people->val.first[stocks.size()-1] = stoi(splits[i+1]);
 		}
 	}
 	if (splits[n-1][0] == 's') {
-		for (int j = 0; j < (int)stocks.size(); j++) people->val[j] *= -1;
+		for (int j = 0; j < (int)stocks.size(); j++) people->val.first[j] *= -1;
+		T->val.second = 1;
 	}
 	// ADDED ENTRY FOR NEW PERSON
 
@@ -206,8 +209,9 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 		bool flags = 1;
 		bool cancel = 1;
 		for (int j = 0; j < (int)stocks.size(); j++) {
-			if (j != 0 && T->val[j] != people->val[j]) flags = 0;
-			if (T->val[j] + people->val[j] != 0) cancel = 0;
+			if (j != 0 && T->val.first[j] != people->val.first[j]) flags = 0;
+			if (T->val.first[j] + people->val.first[j] != 0) cancel = 0;
+			if (T->val.second + people->val.second != 1) cancel = 0; // One buy and one sell only.
 		}
 		if (cancel == 1) {
 			cout << "No Trade\n";
@@ -224,13 +228,27 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 			peps -= 2;
 			return;
 		}
-		if (flags == 1 && T->val[0] < people->val[0]) {
-			prev->next = T->next;
-			U->next = V->next;
-			delete T;
-			delete V;
-			T = prev->next;
-			peps--;
+		if (flags == 1 && people->val.second == T->val.second) {
+			// Both buy or sell: the first one is less efficient than second.
+			if (T->val.first[0] < people->val.first[0])  {
+				prev->next = T->next;
+				U->next = V->next;
+				delete T;
+				delete V;
+				T = prev->next;
+				peps--;
+			}
+			else {
+				cout << "No Trade\n";
+				prev = people;
+				U = orders;
+				people = people->next;
+				orders = orders->next;
+				delete prev;
+				delete U;
+				peps--;
+				return;
+			}
 		}
 		else {
 			prev = T;
@@ -254,7 +272,7 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 		vector<int> resultant(m, 0);
 		T = people;
 		while (T != nullptr) {
-			for (int j = 0; j < m; j++) resultant[j] += included[i]*T->val[j];
+			for (int j = 0; j < m; j++) resultant[j] += included[i]*T->val.first[j];
 			T = T->next;
 			i++;
 		}
@@ -276,7 +294,7 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 	if (maxProfit > 0) {
 		int i = 0;
 		T = people;
-		ptr<vector<int>> prev = nullptr;
+		ptr<Pair<vector<int>, int8_t>> prev = nullptr;
 		U = nullptr;
 		V = orders;
 
@@ -618,7 +636,7 @@ int main(int argc, char* argv[]) {
 
 	// For part 2 -- Arbitrage
 	vector<stock> stocksArbitrage(1, {"", 0});
-	ptr<vector<int>> people = nullptr;
+	ptr<Pair<vector<int>, int8_t>> people = nullptr;
 	ptr<string> orders = nullptr;
 	int FinalProfit = 0;
 	int peps = 0;
