@@ -12,9 +12,31 @@ struct node {
 template <typename T>
 using ptr = node<T>*;
 
+template <typename T, typename U>
+struct Pair {
+	T first;
+	U second;
+	Pair(): first(0), second(0) {}
+	Pair(T a, U b): first(a), second(b) {}
+	bool operator == (Pair& B) {
+		return (first == B.first && second == B.second);
+	}
+	bool operator < (Pair& B) {
+		if (first < B.first) return true;
+		if (first == B.first) return (second < B.second);
+		return false;
+	}
+};
+
 struct stock {
 	string name = "";
 	int price = 0;
+};
+
+struct comb_t {
+	vector<int> numbers;
+	dict<int, int> orders;
+	int8_t buy;
 };
 
 struct stockLowHigh {
@@ -51,6 +73,47 @@ string stringSplit(string message, vector<string>& splits) {
 	return order;
 }
 
+typedef dict<vector<int>, Pair<dict<int, int>, dict<int, int>>> DICT_T;
+typedef vector<Pair<vector<int>, string>> VECT_ORD;
+// NOTATION: first == sell orders. Second == buy orders.
+
+int8_t combiSplit(string message, vector<int>& current, vector<string>& names, DICT_T& linComb, VECT_ORD& history, int& price, int& qty) {
+	int i = 0;
+	string order = "";
+	string temp;
+	string num;
+	while (true)
+	{
+		temp = "";
+		num = "";
+		if (message[i] == '-' || (message[i] < 58 && message[i] >= 48)) break;
+		while (message[i] != ' ') temp += message[i++]; i++;
+		while (message[i] != ' ') num += message[i++]; i++;
+		bool flags = 1;
+		for (int j = 0; j < names.size(); j++) {
+			if (names[j] == temp) {current[j] = stoi(num); flags = 0;}
+		}
+		if (flags) {
+			names.push_back(temp);
+			current.push_back(stoi(num));
+			for (auto itr = linComb.begin(); !itr.isNull(); itr++) itr.key().push_back(0);
+		}
+		order += temp;
+		order += ' ';
+		order += num;
+		order += ' ';
+	}
+	num = "";
+	temp = "";
+	while (message[i] != ' ') num += message[i++]; i++;
+	while (message[i] != ' ') temp += message[i++]; i++;
+	price = stoi(num);
+	qty = stoi(temp);
+	int8_t buy = (message[i] == 'b');
+	history.push_back({current, order});
+	return buy;
+}
+
 void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 	int i = 0;
 	string stockName = ""; 
@@ -60,7 +123,6 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 	int price = 0;
 	while (order[i] != ' ') price = 10*price + (int)order[i++] - 48; 
 	char bs = order[++i];
-	while (order[i] != '\n' && i != order.length()) i++; i++;
 
 	if (!stocks.find(stockName).isNull()) {
 		stockLowHigh& j = stocks[stockName];
@@ -272,9 +334,290 @@ void arbitrage(string message, vector<stock>& stocks, ptr<vector<int>>& people, 
 	}
 }
 
-void orderBook(string order) {
-	// @YashJonjale, your code should be here. Add any parameters as per your choice, preferably pass by reference
-	return;
+void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>& names,  int& FinalProfit) {
+	vector<int> current(names.size(), 0);
+	int price = 0;
+	int qty = 0;
+	int8_t buySell = combiSplit(order, current, names, linComb, history, price, qty);
+	int8_t opposTrans = 1 - buySell;
+
+	if (buySell) {
+		auto itr = linComb[current].first.find(price);
+		if (!itr.isNull()) {
+			if (itr.val() < qty) {
+				qty -= itr.val();
+				linComb[current].first.remove(itr.key());
+			}
+			else {
+				itr.val() -= qty;
+				if (itr.val() == 0) linComb[current].first.remove(price);
+				cout << "No Trade\n";
+				return;
+			}
+		}
+		linComb[current].second[price] += qty;
+	}
+	else {
+		auto itr = linComb[current].second.find(price);
+		if (!itr.isNull()) {
+			if (itr.val() < qty) {
+				qty -= itr.val();
+				linComb[current].second.remove(itr.key());
+			}
+			else {
+				itr.val() -= qty;
+				if (itr.val() == 0) linComb[current].second.remove(price);
+				cout << "No Trade\n";
+				return;
+			}
+		}
+		linComb[current].first[price] += qty;
+	}
+
+	vector<dict<int, int>> profits(linComb.size());
+	vector<Pair<int, int>> limits(linComb.size());
+	auto itr = linComb.begin();
+	for (int i = 0; i < linComb.size(); i++)
+	{
+		auto Dict_J = itr.val().first;
+		auto Dict_K = itr.val().second;
+		int x = 0;
+		// NOTATION: x < 0 means something we take buy orders. x > 0 means something we take sell orders.
+
+		while (true) {
+			profits[i][x] = 0;
+			auto ktr = Dict_K.end();
+			int y = 0;
+			while (!ktr.isNull()) {
+				if (y + ktr.val() <= -x) {
+					y += ktr.val();
+					profits[i][x] += ktr.val()*ktr.key();
+					--ktr;
+				} else break;
+			}
+			if (ktr.isNull()) {
+				break;
+			}
+			auto jtr = Dict_J.begin();
+			int kIn = y + ktr.val() + x;
+			int jIn = 0;
+			while (!jtr.isNull() && !ktr.isNull() && jtr.key() >= ktr.key()) {
+				if (kIn == ktr.val()) {
+					ktr--; kIn = 0;
+				} else kIn++;
+				if (jIn == jtr.val()) {
+					jtr++; jIn = 0;
+				} else jIn++;
+				profits[i][x] += jtr.key() - ktr.key();
+			}
+			x--;
+		}
+		limits[i].first = x;
+		x = 1;
+		if (!Dict_J.empty()) {
+			while (true) {
+				profits[i][x] = 0;
+				auto jtr = Dict_J.begin();
+				int y = 0;
+				while (!jtr.isNull()) {
+					if (y + jtr.val() <= x) {
+						y += jtr.val();
+						profits[i][x] -= jtr.key()*jtr.val();
+						++jtr;
+					} else break;
+				}
+				if (jtr.isNull()) {
+					break;
+				}
+				auto ktr = Dict_K.end();
+				int jIn = y + jtr.val() - x;
+				int kIn = 0;
+				while ( jtr.key() >= ktr.key()) {
+					if (kIn == ktr.val()) {
+						ktr--; kIn = 0;
+					} else kIn++;
+					if (jIn == jtr.val()) {
+						jtr++; jIn = 0;
+					} else jIn++;
+					profits[i][x] += jtr.key() - ktr.key();
+				}
+				x++;
+			}
+			limits[i].second = x;
+		}
+		else limits[i].second = 0;
+		itr++;
+	}
+
+	// The Main Exponential Part begins here.
+	vector<int> finale(linComb.size(), 0);
+	vector<int> thisComb(linComb.size(), 0);
+	for (int i = 0; i < linComb.size(); i++) thisComb[i] = limits[i].first;
+	bool flags = 1;
+	int mainProfit = 0;
+
+	while (flags) {
+		vector<int> implication(names.size(), 0);
+		int impliedProfit = 0;
+
+		int i = 0;
+		auto itr = linComb.begin();
+		while (i < linComb.size())
+		{
+			impliedProfit += profits[i][thisComb[i]];
+			for (int j = 0; j < names.size(); j++) implication[j] += itr.key()[j];
+			++itr; i++;
+		}
+		bool flags = 1;
+		for (int j = 0; j < linComb.size(); j++) if (implication[j] != 0) flags = 0;
+		if (flags && mainProfit < impliedProfit) {
+			mainProfit = impliedProfit;
+			finale = thisComb;
+		}
+		i = linComb.size() - 1;
+		while (i >= 0 && thisComb[i] == limits[i].second) i--;
+		if (i < 0) flags = 0;
+		else thisComb[i]++;
+	}
+
+	// Cleanup and printing
+	if (mainProfit <= 0) {
+		cout << "No Trade\n";
+		return;
+	}
+	FinalProfit += mainProfit;
+	for (int i = history.size() - 1; i >= 0; i--) {
+		auto itr = linComb.begin();
+		int j = 0;
+		while (!itr.isNull()) 
+		{
+			if (itr.key() == current && finale[j] != INT_MIN) {
+				auto Dict_J = itr.val().first;
+				auto Dict_K = itr.val().second;
+
+				if (finale[j] < 0) {
+					auto ktr = Dict_K.end();
+					int y = 0;
+					while (!ktr.isNull()) {
+						if (y + ktr.val() <= -finale[j]) {
+							y += ktr.val();
+							cout << history[j].second << ktr.key() << " " << ktr.val() << " s\n";
+							auto ltr = ktr;
+							--ktr;
+							Dict_K.remove(ltr.key());
+						} else {
+							cout << history[j].second << ktr.key() << " " << (-finale[j] - y) << " s\n";
+							Dict_K[ktr.key()] -= (-finale[j] - y);
+							break;
+						}
+					}
+					auto jtr = Dict_J.begin();
+					if (!ktr.isNull()) {
+						int kIn = 0;
+						int jIn = 0;
+						while (!jtr.isNull() && !ktr.isNull() && jtr.key() >= ktr.key()) {
+							if (kIn == ktr.val()) {
+								auto ltr = ktr;
+								ktr--;
+								cout << history[j].second << ltr.key() << " " << ltr.val() << " s\n";
+								Dict_K.remove(ltr.key());
+							} else kIn++;
+							if (jIn == jtr.val()) {
+								auto ltr = jtr;
+								jtr++;
+								cout << history[j].second << ltr.key() << " " << ltr.val() << " b\n";
+								Dict_J.remove(ltr.key());
+							} else jIn++;
+						}
+						if (!jtr.isNull()) {
+							cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+							jtr.val() -= jIn;
+						}
+						if (!ktr.isNull()) {
+							cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+							ktr.val() -= kIn;
+						}
+					}
+				}
+				else if (finale[j] > 0) {
+					auto jtr = Dict_J.begin();
+					int y = 0;
+					while (!jtr.isNull()) {
+						if (y + jtr.val() <= finale[j]) {
+							y += jtr.val();
+							cout << history[j].second << jtr.key() << " " << jtr.val() << " b\n";
+							auto ltr = jtr;
+							--jtr;
+							Dict_K.remove(ltr.key());
+						} else {
+							cout << history[j].second << jtr.key() << " " << (finale[j] - y) << " b\n";
+							Dict_K[jtr.key()] -= (finale[j] - y);
+							break;
+						}
+					}
+					auto ktr = Dict_K.end();
+					if (!jtr.isNull()) {
+						int kIn = 0;
+						int jIn = 0;
+						while (!jtr.isNull() && !ktr.isNull() && jtr.key() >= ktr.key()) {
+							if (kIn == ktr.val()) {
+								auto ltr = ktr;
+								ktr--;
+								cout << history[j].second << ltr.key() << " " << ltr.val() << " s\n";
+								Dict_K.remove(ltr.key());
+							} else kIn++;
+							if (jIn == jtr.val()) {
+								auto ltr = jtr;
+								jtr++;
+								cout << history[j].second << ltr.key() << " " << ltr.val() << " b\n";
+								Dict_J.remove(ltr.key());
+							} else jIn++;
+						}
+						if (!jtr.isNull()) {
+							cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+							jtr.val() -= jIn;
+						}
+						if (!ktr.isNull()) {
+							cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+							ktr.val() -= kIn;
+						}
+					}
+				}
+				else {
+					auto jtr = Dict_J.begin();
+					auto ktr = Dict_K.end();
+					int kIn = 0;
+					int jIn = 0;
+					while (!jtr.isNull() && !ktr.isNull() && jtr.key() >= ktr.key()) {
+						if (kIn == ktr.val()) {
+							auto ltr = ktr;
+							ktr--;
+							cout << history[j].second << ltr.key() << " " << ltr.val() << " s\n";
+							Dict_K.remove(ltr.key());
+						} else kIn++;
+						if (jIn == jtr.val()) {
+							auto ltr = jtr;
+							jtr++;
+							cout << history[j].second << ltr.key() << " " << ltr.val() << " b\n";
+							Dict_J.remove(ltr.key());
+						} else jIn++;
+					}
+					if (!jtr.isNull()) {
+						cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+						jtr.val() -= jIn;
+					}
+					if (!ktr.isNull()) {
+						cout << history[j].second << jtr.key() << " " << jIn << " b\n";
+						ktr.val() -= kIn;
+					}
+				}
+				finale[j] = INT_MIN;
+				break;
+			}
+			itr++;
+			j++;
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -297,7 +640,9 @@ int main(int argc, char* argv[]) {
 	int peps = 0;
 	
 	// For part 3 -- Order Book Processing
-	int x = 0;
+	VECT_ORD history;
+	DICT_T linComb;
+	vector<string> names;
 
 	while (flags) {
 		if (message == "") {
@@ -320,7 +665,7 @@ int main(int argc, char* argv[]) {
 			if (order != "") {
 				if (argv[1][0] == '1') buyLowSellHigh(order, stocksLowHigh);
 				else if (argv[1][0] == '2') arbitrage(order, stocksArbitrage, people, orders, FinalProfit, peps);
-				else if (argv[1][0] == '3') orderBook(order); // You can add parameters
+				else if (argv[1][0] == '3') orderBook(order, linComb, history, names, FinalProfit); // You can add parameters
 				else cout << order << "\n";
 			}
 			order = "";
@@ -329,12 +674,11 @@ int main(int argc, char* argv[]) {
 				message = "";
 				continue;
 			}
-			x++;
 			continue;
 		}
 		message = rcv.readIML();
 		i = 0;
 	}
-	if (argv[1][0] == '2') cout << FinalProfit << "\n";
+	if (argv[1][0] == '2' || argv[1][0] == '3') cout << FinalProfit << "\n";
 	rcv.terminate();
 }

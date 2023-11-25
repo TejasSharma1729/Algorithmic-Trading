@@ -52,9 +52,9 @@ class market
 		void printname(int qty) {
 			int n = name.size() - 1;
 			for (int i = 0; i < n; i++) {
-				cout << qty*quant[i] << " shares of " << name[i] << " and ";
+				cout << qty*quant[i] << " share of " << name[i] << " and ";
 			}
-			cout << qty*quant[n] << " shares of " << name[n];
+			cout << qty*quant[n] << " share of " << name[n];
 		}
 
 		void expire(int t) {
