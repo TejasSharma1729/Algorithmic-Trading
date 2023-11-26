@@ -11,4 +11,5 @@ all: iml.cpp trader.cpp
 
 clean:
 	rm -rf trader iml output.txt
+	rm -rf *.dSYM
 	rm -rf *~

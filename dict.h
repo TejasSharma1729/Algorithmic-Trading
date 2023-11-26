@@ -7,6 +7,16 @@ template <typename T, typename U>
 struct Pair {
 	T first;
 	U second;
+	Pair() {}
+	Pair(T a, U b): first(a), second(b) {}
+	bool operator == (Pair& B) {
+		return (first == B.first && second == B.second);
+	}
+	bool operator < (Pair& B) {
+		if (first < B.first) return true;
+		if (first == B.first) return (second < B.second);
+		return false;
+	}
 };
 
 /*
