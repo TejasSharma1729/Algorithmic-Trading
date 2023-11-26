@@ -1,10 +1,11 @@
 // This is your trader. Place your orders from here
 
-
+#include<iostream>
 #include <string>
 
 int reader(int time)
 {
+    std::cout << time << " Harry SELL AMD $1 #32 1" << std::endl;
     return 1;
 }
 

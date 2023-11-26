@@ -60,7 +60,7 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 	int price = 0;
 	while (order[i] != ' ') price = 10*price + (int)order[i++] - 48; 
 	char bs = order[++i];
-	while (order[i] != '\n' && i != order.length()) i++; i++;
+	// while (order[i] != '\n' && i != order.length()) i++; i++;
 
 	if (!stocks.find(stockName).isNull()) {
 		stockLowHigh& j = stocks[stockName];
@@ -281,9 +281,9 @@ int main(int argc, char* argv[]) {
 	// For all parts
 	Receiver rcv;
 	int lineCount = 0;
-	int i = 0;
+	int i = 0;//character number
 	string message = rcv.readIML();
-	string order = "";
+	string order = "";//stores the order
 	bool flags = 1;
 
 	// For part 1 -- Buy Low, Sell High
@@ -297,6 +297,11 @@ int main(int argc, char* argv[]) {
 	int peps = 0;
 	
 	// For part 3 -- Order Book Processing
+
+
+
+
+	//
 	int x = 0;
 
 	while (flags) {
@@ -307,14 +312,17 @@ int main(int argc, char* argv[]) {
 		}
 		
 		while (i < message.length() && (message[i] != 13 && message[i] != 0 && message[i] != 10)) order += message[i++];
+
 		if (message[i] != 13 && message[i] != 10 && message[i] != 0) {
 			message = "";
 			continue;
 		}
+
 		if (message[i-1] == '$') {
 			flags = 0;
 			if (message[i-2] == 13 || message[i-2] == 0 || message[i-2] == 10) break;
 		}
+
 		if (message[i] == 13 || message[i] == 0 || message[i] == 10) 
 		{
 			if (order != "") {
@@ -332,9 +340,12 @@ int main(int argc, char* argv[]) {
 			x++;
 			continue;
 		}
+
 		message = rcv.readIML();
 		i = 0;
 	}
+
 	if (argv[1][0] == '2') cout << FinalProfit << "\n";
+	
 	rcv.terminate();
 }
