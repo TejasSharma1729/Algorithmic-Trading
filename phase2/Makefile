@@ -2,7 +2,7 @@
 # Do not modify this file
 #------------------------
 
-all: market
+all: trader
 
 # For part1: marked with a blank trader
 market: main.cpp market.cpp worker.cpp blank_trader.cpp

@@ -9,10 +9,10 @@ int market::split(string message, int prevT, int line) {
     string ord = "";
     int i = 0;
     while (true) {
-        if (message[i] == ' ' || message[i] == 13) {
+        if (message[i] == ' ' || message[i] == 13 || message[i] == 10 || message[i] == 0) {
             if (ord != "") splits.push_back(ord);
             ord = "";
-            if (message[i] == 13) break;
+            if (message[i] == 13 || message[i] == 10 || message[i] == 0) break;
             i++;
         } 
         else {
@@ -88,7 +88,7 @@ void market::start()
     int lastTime = 0;
     int line = 0;
 	string message;
-    ifstream readFile("./samples/output.txt");
+    ifstream readFile("./output.txt");
     getline(readFile, message);
     getline(readFile, message);
     while (message != "" && message[0] != '!') {
