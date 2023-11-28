@@ -641,6 +641,12 @@ class market
 			if (timeIn < B.timeIn) return true;
 			else if (timeIn > B.timeIn) return false;
 			if (person < B.person) return true;
+			else if (person > B.person) return false;
+			if (qty < B.qty) return true;
+			else if (qty > B.qty) return false;
+			if (timeExp < B.timeExp) return true;
+			else if (timeExp > B.timeExp) return false;
+			if (line < B.line) return true;
 			else return false;
 		}
 		bool operator == (const order& B) const {
@@ -668,7 +674,7 @@ class market
 		dict<int, dict<order, bool>> timeExpSell;
 
 		void printname(int qty) {
-			int n = name.size() - 1;
+			int n = (int)name.size() - 1;
 			for (int i = 0; i < n; i++) {
 				cout << qty*quant[i] << " share of " << name[i] << " and ";
 			}
@@ -676,12 +682,12 @@ class market
 		}
 
 		void expire(int t) {
-			dict<order, bool> out = timeExpBuy[t];
-			for (auto itr = out.begin(); !itr.isNull(); itr++) {
+			dict<order, bool>& outB = timeExpBuy[t];
+			for (auto itr = outB.begin(); !itr.isNull(); itr++) {
 				bookBuy.remove(itr.key());
 			}
-			out = timeExpSell[t];
-			for (auto itr = out.begin(); !itr.isNull(); itr++) {
+			dict<order, bool>& outS = timeExpSell[t];
+			for (auto itr = outS.begin(); !itr.isNull(); itr++) {
 				bookSell.remove(itr.key());
 			}
 			timeExpBuy.remove(t);
@@ -735,7 +741,7 @@ class market
 						bought.push_back(itr.key());
 
 						auto& A = peoples[itr.key().person];
-						A.bought = numTransacted*q1;
+						A.bought += numTransacted*q1;
 						A.obtained -= price*q1;
 						auto& B = peoples[jtr.key().person];
 						B.sold += numTransacted*q1;
@@ -795,11 +801,11 @@ class market
 				}
 				else --jtr;
 			}
-			int n = bought.size();
+			int n = (int)bought.size();
 			for (int i = 0; i < n; i++) {
 				remove(bought[i], 0);
 			}
-			n = sold.size();
+			n = (int)sold.size();
 			for (int i = 0; i < n; i++) {
 				remove(sold[i], 1);
 			}
@@ -807,14 +813,14 @@ class market
 
 		bool operator == (const stock& B) const {
 			if (name.size() != B.name.size()) return false;
-			for (int i = 0; i < name.size(); i++) if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
+			for (int i = 0; i < (int)name.size(); i++) if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
 			return true;
 		}
 		bool operator < (const stock& B) const {
 			int i = 0;
 			while (true) {
-				if (i == name.size()) return (B.name.size() > name.size());
-				if (i == B.name.size()) return false;
+				if (i == (int)name.size()) return (B.name.size() > name.size());
+				if (i == (int)B.name.size()) return false;
 				if (name[i] < B.name[i]) return true;
 				else if (name[i] == B.name[i]) {
 					if (quant[i] == B.quant[i]) {
