@@ -723,7 +723,7 @@ int trader(std::string *message)
 {
     string order = message[0];
     int currentTime = commonTimer.load();
-    string outPut = to_string(currentTime) + " tejassharma_yashjonjale ";
+    string outPut = to_string(currentTime) + " 22B0909_22B0990 ";
     string otherPut = outPut;
     std::lock_guard<std::mutex> lock(printMutex);
     int i = 0;
@@ -733,7 +733,7 @@ int trader(std::string *message)
     }
 	string name = "";
     while (order[i] != ' ') name += order[i++]; i++;
-	if (name == "tejassharma_yashjonjale") return 0;
+	if (name == "22B0909_22B0990") return 0;
 
     int8_t buyOrd = 0;
 
