@@ -686,7 +686,7 @@ namespace Trader {
     };
     struct stockStruct {
         vector<string> name;
-        vecto<int> quant;
+        vector<int> quant;
         bool operator == (const stockStruct& B) const {
 			if (name.size() != B.name.size()) return false;
 			for (int i = 0; i < (int)name.size(); i++) if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
@@ -709,9 +709,11 @@ namespace Trader {
 			}
 		}
     };
-    dict<string, dynamicMedian> medianPrices;
-    dict<string, dict<int, Pair<int, int>>> singleStock;
-    dict<stockStruct, dict<int, Pair<int, int>>> combinations;
+    dict<stockStruct, dynamicMedian> medianPrices;
+    dict<string, int> withMe;
+    dict<stockStruct, Pair<dict<int, dict<int, int>>, dict<int, dict<int, int>>>> combinations;
+    dict<stockStruct, dict<int, Pair<dict<int, int>, dict<int, int>>>> timeWise;
+    // Notation: first == what WE BUY. second == what WE SELL
 
     long seekPos = 0;
 };
@@ -719,96 +721,359 @@ namespace Trader {
 // BELOW FUNCTION IS TO ACT ON ONE ORDER AT A TIME AND TO GENERATE OUTPUT APT-LY.
 int trader(std::string *message)
 {
+    string order = message[0];
     int currentTime = commonTimer.load();
     string outPut = to_string(currentTime) + " tejassharma_yashjonjale ";
+    string otherPut = outPut;
     std::lock_guard<std::mutex> lock(printMutex);
     int i = 0;
     while (true) {
-        if (message[0][i] >= 48 && message[0][i] < 58) i++;
+        if (order[i] >= 48 && order[i] < 58) i++;
         else {i++; break;}
     }
-    while (message[0][i] != ' ') i++; i++;
+	string name = "";
+    while (order[i] != ' ') name += order[i++]; i++;
+	if (name == "tejassharma_yashjonjale") return 0;
 
     int8_t buyOrd = 0;
     int medianWeighted = 0;
 
-    if (message[0][i] == 'S') {
+    if (order[i] == 'S') {
         outPut += "BUY "; i += 5;
+        otherPut += "SELL ";
         buyOrd = 1;
     } 
-    else if (message[0][i] == 'B') {
+    else if (order[i] == 'B') {
         outPut += "SELL "; i += 4;
+        otherPut += "BUY ";
         buyOrd = -1;
     } 
-    else throw invalid_argument("[" + to_string(i) + "] == " + message[0][i]);
+    else throw invalid_argument("[" + to_string(i) + "] == " + order[i]);
 
     int j = i;
-    while (message[0][j] != '$') j++;
+    while (order[j] != '$') j++;
     j++;
 
     int price;
     string num = "";
-    while (message[0][j] != ' ') num += message[0][j++];
+    while (order[j] != ' ') num += order[j++];
     price = stoi(num);
     j += 2;
 
     int quantity;
     num = "";
-    while (message[0][j] != ' ') num += message[0][j++];
+    while (order[j] != ' ') num += order[j++];
     quantity = stoi(num);
     num = ""; 
     j++;
 
     int retTime;
-    while (j < (int)message[0].length() && message[0][j] != ' ' && message[0][j] != 13 && message[0][j] != 10 && message[0][j] != 0) num += message[0][j++];
+    while (j < (int)order.length() && order[j] != ' ' && order[j] != 13 && order[j] != 10 && order[j] != 0) num += order[j++];
     retTime = stoi(num);
+    int timeExp = retTime + currentTime;
 
-    vector<Pair<string, Pair<int, int>>> medians;
-    int numEmpty = 0;
+    unsigned long squareNow = 0;
+    unsigned long squareDiff = 0;
 
-    while (message[0][i] != '$') {
+    Trader::stockStruct current;
+    while (order[i] != '$') {
         string stockName = "";
-        while (message[0][i] != ' ') stockName += message[0][i++];
-        outPut += stockName + ' ';
-        if (message[0][++i] == '$') {
-            medianWeighted = Trader::medianPrices[stockName].median(); 
-            if (medianWeighted == INT_MIN) buyOrd = 0;
-            Trader::medianPrices[stockName].insert(price);
+        while (order[i] != ' ') stockName += order[i++];
+        i++;
+        current.name.push_back(stockName);
+        if (order[i] == '$' || (order[i] != ' ' && (order[i] < 48 || order[i] >= 58))) {
+            current.quant.push_back(1);
+            outPut += stockName + " ";
+            otherPut += stockName + " ";
+            squareNow += (long)Trader::withMe[stockName] * Trader::withMe[stockName];
+            squareDiff += ((long)Trader::withMe[stockName] + buyOrd) *((long)Trader::withMe[stockName] + buyOrd);
         }
         else {
             string num = "";
-            while (message[0][i] != ' ') num += message[0][i++]; i++;
+            while (order[i] != ' ') num += order[i++];
+            i++;
             int n = stoi(num);
-            int med = Trader::medianPrices[stockName].median();
-            if (med == INT_MIN) {
-                buyOrd = 0;
-                medians.push_back({stockName, {n, INT_MIN}});
-                numEmpty += n;
-            } else {
-                medians.push_back({stockName, {n, med}});
-                medianWeighted += n*med;
-            }
-            outPut += num + ' ';
+            current.quant.push_back(n);
+            squareNow += (long)Trader::withMe[stockName] * Trader::withMe[stockName];
+            squareDiff += ((long)Trader::withMe[stockName] + buyOrd*n) *((long)Trader::withMe[stockName] + buyOrd*n);
+            outPut += stockName + " " + num + " ";
+            otherPut += stockName + " " + num + " ";
         }
     }
-    if (buyOrd == 0) {
-        if (!medians.empty()) for (int i = 0; i < (int)medians.size(); i++) if (medians[i].second.second == INT_MIN) {
-            Trader::medianPrices[medians[i].first].insert((price - medianWeighted)*medians[i].second.first / numEmpty);
+
+    auto& Dict_C = Trader::combinations[current];
+    auto& Dict_D = Trader::timeWise[current];
+    // Reminder: First == What WE buy. Second == What WE sell.
+
+    auto it = Dict_D.begin();
+    while (!it.isNull() && it.key() < currentTime) {
+        auto jt = it.val().first.begin();
+        auto kt = it.val().second.begin();
+
+        while (!jt.isNull()) {
+            Dict_C.first[jt.key()].remove(it.key());
+            jt++;
         }
-        return 0;
+        while (!kt.isNull()) {
+            Dict_C.second[kt.key()].remove(it.key());
+			kt++;
+        }
+
+        auto lt = it;
+        it++;
+        Dict_D.remove(lt.key());
+    }
+	// Wash out earlier orders.
+
+    Trader::medianPrices[current].insert(price);
+
+    if (buyOrd == 1) {
+        if (price < Trader::medianPrices[current].median()) {
+            for (int i = 0; i < (int)current.name.size(); i++) {
+                Trader::withMe[current.name[i]] += current.quant[i]*quantity;
+            }
+			string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + " 2\r";
+			if (quantity > 0) std::cout << print << "\n"; 
+			//Trader::seekPos += print.length() + 1;
+        }
+        else {
+            Trader::combinations[current].first[price][timeExp] += quantity;
+            Trader::timeWise[current][timeExp].first[price] += quantity;
+        }
     }
     else {
-        if (buyOrd*(medianWeighted - price) > 0) buyOrd = 0;
-        for (int i = 0; i < (int)medians.size(); i++) Trader::medianPrices[medians[i].first].insert(price * medians[i].second.first / medianWeighted);
+        if (price > Trader::medianPrices[current].median()) {
+            for (int i = 0; i < (int)current.name.size(); i++) {
+                Trader::withMe[current.name[i]] -= current.quant[i]*quantity;
+            }
+            string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + " 2\r";
+			if (quantity > 0) std::cout << print << "\n"; 
+			//Trader::seekPos += print.length() + 1;
+        }
+        else {
+            Trader::combinations[current].second[price][timeExp] += quantity;
+            Trader::timeWise[current][timeExp].second[price] += quantity;
+        }
     }
-    if (retTime < currentTime) buyOrd = 0;
-    if (buyOrd != 0) {
-        string outMessage = outPut + "$" + to_string(price) + " #" + to_string(quantity) + " 2\r";
-        Trader::seekPos += outMessage.length() + 1; 
-        cout << outMessage << "\n";
-        return 1;
+	// Median-based trader or insert.
+    
+    auto itr = Dict_C.first.begin();
+    auto jtr = Dict_C.second.end();
+    int madeTrans = 0;
+
+    if (squareDiff < squareNow) {
+        if (buyOrd == 1) {
+            while (!itr.isNull() && squareDiff < squareNow) {
+	            auto ktr = itr.val().begin();
+				if (ktr.isNull()) {
+					itr++; continue;
+				}
+                ktr.val()--;
+                Dict_D[ktr.key()].first[itr.key()]--;
+                if (ktr.val() == 0) {
+                    auto ltr = ktr;
+                    ktr++;
+                    Dict_D[ltr.key()].first.remove(itr.key());
+                    itr.val().remove(ltr.key());
+                }
+                madeTrans++;
+                if (ktr.isNull()) {
+					string print = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+					//Trader::seekPos += print.length() + 1;
+                    if (madeTrans > 0) std::cout << print << "\n";
+                    madeTrans = 0;
+                    auto kt = itr;
+                    itr++;
+                    Dict_C.first.remove(kt.key());
+                }
+                squareNow = squareDiff;
+                squareDiff = 0;
+                for (int i = 0; i < (int)current.name.size(); i++) {
+                    int x = Trader::withMe[current.name[i]] + current.quant[i];
+                    squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
+                    Trader::withMe[current.name[i]] = x;
+                }
+            }
+            if (!itr.isNull()) {
+				string print = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+				//Trader::seekPos += print.length() + 1;
+				if (madeTrans > 0) std::cout << print << "\n";
+			}
+        }
+        else {
+            while (!jtr.isNull() && squareDiff < squareNow) {
+                auto ktr = jtr.val().begin();
+				if (ktr.isNull()) {
+					jtr--; continue;
+				}
+                ktr.val()--;
+                Dict_D[ktr.key()].second[jtr.key()]--;
+                if (ktr.val() == 0) {
+                    Dict_D[ktr.key()].second.remove(jtr.key());
+                    auto ltr = ktr;
+                    ktr++;
+                    jtr.val().remove(ltr.key());
+                }
+                madeTrans++;
+                if (ktr.isNull()) {
+                    string print = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+					//Trader::seekPos += print.length() + 1;
+                    if (madeTrans > 0) std::cout << print << "\n"; 
+                    madeTrans = 0; 
+                    auto kt = jtr;
+                    jtr--;
+                    Dict_C.second.remove(kt.key());
+                }
+                squareNow = squareDiff;
+                squareDiff = 0;
+                for (int i = 0; i < (int)current.name.size(); i++) {
+                    int x = Trader::withMe[current.name[i]] - current.quant[i];
+                    squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
+                    Trader::withMe[current.name[i]] = x;
+                }
+            }
+            if (!jtr.isNull()) {
+				string print = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+				//Trader::seekPos += print.length() + 1;
+				if (madeTrans > 0) std::cout << print << "\n";
+			}
+        }
     }
-    else return 0;
+    else {
+        squareDiff = 0;
+        for (int i = 0; i < (int)current.name.size(); i++) {
+            int x = Trader::withMe[current.name[i]] - current.quant[i];
+            squareDiff += (x - buyOrd*current.quant[i]) * (x - buyOrd*current.quant[i]);
+            Trader::withMe[current.name[i]] = x;
+        }
+        if (buyOrd == 1) {
+            while (!jtr.isNull() && squareDiff < squareNow) {
+                auto ktr = jtr.val().begin();
+				if (ktr.isNull()) {
+					jtr--; continue;
+				}
+                ktr.val()--;
+                Dict_D[ktr.key()].second[jtr.key()]--;
+                if (ktr.val() == 0) {
+                    Dict_D[ktr.key()].second.remove(jtr.key());
+                    auto ltr = ktr;
+                    ktr++;
+                    jtr.val().remove(ltr.key());
+                }
+                madeTrans++;
+                if (ktr.isNull()) {
+                    string print = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+					//Trader::seekPos += print.length() + 1;
+                    if (madeTrans > 0) std::cout << print << "\n";
+                    madeTrans = 0; 
+                    auto kt = jtr;
+                    jtr--;
+                    Dict_C.second.remove(kt.key());
+                }
+                squareNow = squareDiff;
+                squareDiff = 0;
+                for (int i = 0; i < (int)current.name.size(); i++) {
+                    int x = Trader::withMe[current.name[i]] - current.quant[i];
+                    squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
+                    Trader::withMe[current.name[i]] = x;
+                }
+            }
+            if (!jtr.isNull()) {
+				string print = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+				//Trader::seekPos += print.length() + 1;
+				if (madeTrans > 0) std::cout << print << "\n";
+			}
+        }
+        else {
+            while (!itr.isNull() && squareDiff < squareNow) {
+                auto ktr = itr.val().begin();
+				if (ktr.isNull()) {
+					itr++; continue;
+				}
+                ktr.val()--;
+                Dict_D[ktr.key()].first[itr.key()]--;
+                if (ktr.val() == 0) {
+                    auto ltr = ktr;
+                    ktr++;
+                    Dict_D[ltr.key()].first.remove(itr.key());
+                    itr.val().remove(ltr.key());
+                }
+                madeTrans++;
+                if (ktr.isNull()) {
+                    string print = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+					//Trader::seekPos += print.length() + 1;
+                    if (madeTrans > 0) std::cout << print << "\n";
+                    madeTrans = 0;
+                    auto kt = itr;
+                    itr++;
+                    Dict_C.first.remove(kt.key());
+                }
+                squareNow = squareDiff;
+                squareDiff = 0;
+                for (int i = 0; i < (int)current.name.size(); i++) {
+                    int x = Trader::withMe[current.name[i]] + current.quant[i];
+                    squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
+                    Trader::withMe[current.name[i]] = x;
+                }
+            }
+            if (!itr.isNull()) {
+				string print = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+				//Trader::seekPos += print.length() + 1;
+				if (madeTrans > 0) std::cout << print << "\n";
+			}
+        }
+    }
+	// Clear out extra stocks with us.
+
+    while (!itr.isNull() && !jtr.isNull() && itr.key() < jtr.key()) {
+        madeTrans = 0;
+        auto ktr = itr.val().begin();
+        auto ltr = jtr.val().begin();
+
+        while (!ktr.isNull() && !ltr.isNull()) {
+            madeTrans++;
+            ktr.val()--;
+            Dict_D[ktr.key()].first[itr.key()]--;
+            if (ktr.val() == 0) {
+                auto mtr = ktr;
+                ktr++;
+                Dict_D[mtr.key()].first.remove(itr.key());
+                itr.val().remove(mtr.key());
+            }
+            ltr.val()--;
+            Dict_D[ltr.key()].second[jtr.key()]--;
+            if (ltr.val() == 0) {
+                auto mtr = ltr;
+                ltr++;
+                Dict_D[mtr.key()].second.remove(jtr.key());
+                jtr.val().remove(mtr.key());
+            }
+        }
+        if (buyOrd == 1) {
+			string print1 = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+			string print2 = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+			if (madeTrans > 0) std::cout << print1 << "\n" << print2 << "\n";
+			//Trader::seekPos += print1.length() + print2.length() + 2;
+        }
+        else {
+            string print1 = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " 2\r";
+			string print2 = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " 2\r";
+			if (madeTrans > 0) std::cout << print1 << "\n" << print2 << "\n";
+			//Trader::seekPos += print1.length() + print2.length() + 2;
+        }
+        if (ktr.isNull()) {
+            auto mtr = itr;
+            itr++;
+            Dict_C.first.remove(mtr.key());
+        }
+        if (ltr.isNull()) {
+            auto mtr = jtr;
+            jtr--;
+            Dict_C.second.remove(mtr.key());
+        }
+    }
+	// Arbitrage
+    return 0;
 }
 
 // EXECUTE ORDERS BASED ON A GIVEN TIME;
@@ -822,7 +1087,7 @@ int reader(int time)
     while (message[0] != "") {
         Trader::seekPos += message[0].length() + 1;
         if (message[0][0] == '!') return 0;
-        if (message[0].length() >= 10) trader(message);
+        if (message[0].length() >= 10 && message[0][0] != '(') trader(message);
         message[0] = "";
         std::getline(file, message[0]);
     }

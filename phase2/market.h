@@ -641,6 +641,12 @@ class market
 			if (timeIn < B.timeIn) return true;
 			else if (timeIn > B.timeIn) return false;
 			if (person < B.person) return true;
+			else if (person > B.person) return false;
+			if (qty < B.qty) return true;
+			else if (qty > B.qty) return false;
+			if (timeExp < B.timeExp) return true;
+			else if (timeExp > B.timeExp) return false;
+			if (line < B.line) return true;
 			else return false;
 		}
 		bool operator == (const order& B) const {
@@ -676,12 +682,12 @@ class market
 		}
 
 		void expire(int t) {
-			dict<order, bool> out = timeExpBuy[t];
-			for (auto itr = out.begin(); !itr.isNull(); itr++) {
+			dict<order, bool>& outB = timeExpBuy[t];
+			for (auto itr = outB.begin(); !itr.isNull(); itr++) {
 				bookBuy.remove(itr.key());
 			}
-			out = timeExpSell[t];
-			for (auto itr = out.begin(); !itr.isNull(); itr++) {
+			dict<order, bool>& outS = timeExpSell[t];
+			for (auto itr = outS.begin(); !itr.isNull(); itr++) {
 				bookSell.remove(itr.key());
 			}
 			timeExpBuy.remove(t);
@@ -735,7 +741,7 @@ class market
 						bought.push_back(itr.key());
 
 						auto& A = peoples[itr.key().person];
-						A.bought = numTransacted*q1;
+						A.bought += numTransacted*q1;
 						A.obtained -= price*q1;
 						auto& B = peoples[jtr.key().person];
 						B.sold += numTransacted*q1;
