@@ -1,23 +1,4 @@
 Trader is listening on port 8888...
-0 Connected to client, IP: 127.0.0.1, Port: 56438
-1 Connected to client, IP: 127.0.0.1, Port: 56450
-Connected to client, IP: 127.0.0.1, Port: 56438
-Connected to client, IP: 127.0.0.1, Port: 56450
-35 0 KarGoExpress SELL AMD $120 #32 1
-34 1 KarGoCorp SELL AMZN $100 #30 10
-30 1 KarGoCorp BUY GE $200 #20 8
-32 2 KarGoKrab BUY AMZN $130 #12 0
-35 2 KarGoTravels BUY AMD $100 #50 10
-31 3 KarGoCorp BUY AMZN $50 #30 5
-31 3 KarGoKrab BUY AMD $130 #10 7
-31 4 KarGoCorp SELL AMZN $50 #5 0
-34 4 KarGoExpress SELL GE $150 #50 6
-34 5 KarGoTravels BUY AMD $150 #25 0
-34 5 KarGoExpress BUY NFLX $80 #15 6
-36 6 KarGoExpress SELL AMD $80 #100 -1
-36 6 KarGoTravels SELL AMZN $50 #22 -1
-31 7 KarGoCorp BUY AMD $120 #10 1
-30 7 KarGoCorp SELL GE $50 #15 -1
-29 8 KarGoKrab BUY GE $110 #10 3
-1 $
-1 $
+0 Connected to client, IP: 127.0.0.1, Port: 57120
+1 Connected to client, IP: 127.0.0.1, Port: 57130
+Connected to client, IP: 127.0.0.1, Port: 57120

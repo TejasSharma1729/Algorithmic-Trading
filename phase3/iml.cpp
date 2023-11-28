@@ -17,7 +17,7 @@
 
 int NUM_THREADS = 2;
 const int BUFFER_SIZE = 1024;
-#define PORT 8888
+#define PORT 8886
 // std::atomic<int> commonTimer = 0; // Shared timer
 std::atomic<int> commonTimer(0); // For MAC/Unix
 
@@ -43,14 +43,14 @@ void* workerThread(void* arg) {
     sockaddr_in localAddress;
     socklen_t addrLen = sizeof(localAddress);
 
-    if (getsockname(clientSocket, reinterpret_cast<struct sockaddr*>(&localAddress), &addrLen) == -1) {
-        std::cerr << "Error getting socket address" << std::endl;
-        close(clientSocket);
-    }
-    char ipStr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(localAddress.sin_addr), ipStr, INET_ADDRSTRLEN);
+    // if (getsockname(clientSocket, reinterpret_cast<struct sockaddr*>(&localAddress), &addrLen) == -1) {
+    //     std::cerr << "Error getting socket address" << std::endl;
+    //     close(clientSocket);
+    // }
+    // char ipStr[INET_ADDRSTRLEN];
+    // inet_ntop(AF_INET, &(localAddress.sin_addr), ipStr, INET_ADDRSTRLEN);
     
-    std::cout << "Local address: " << ipStr << ":" << ntohs(localAddress.sin_port)<<" "<<thread_id << std::endl;
+    // std::cout << "Local address: " << ipStr << ":" << ntohs(localAddress.sin_port)<<" "<<thread_id << std::endl;
     
 
 
@@ -89,7 +89,6 @@ void* workerThread(void* arg) {
         std::cerr << "Error sending data to receiver." << std::endl;
         close(clientSocket);
     }
-
     // Close the client socket
     close(clientSocket);
     return NULL;

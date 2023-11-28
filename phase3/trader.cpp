@@ -22,13 +22,6 @@ const int BUFFER_SIZE = 1024;
 int NUM_THREADS = 2;
 std::mutex printMutex;
 // Structure to store client socket and its details
-//34266
-//34262
-
-
-
-
-
 
 struct order{
     public:
@@ -180,19 +173,19 @@ struct order{
 	}
 
 	void display(){
-        cout<<endl;
-        cout<<"__________________________________"<<endl;
-        cout<<"Order id: "<<id<<endl;
-        cout<<"Broker: "<<broker<<endl;
-        cout<<"Stock: "<<stock<<endl;
-        cout<<"Price: "<<price<<endl;
-        cout<<"quantity: "<<num<<endl;
-        cout<<"TimeIN: "<<timeIN<<endl;
-        cout<<"TimeEXP: "<<timeEXP<<endl;
-        cout<<"bs: "<<bs<<endl;
-        cout<<endl;
-        cout<<"__________________________________"<<endl;
-        cout<<endl;
+        cerr<<endl;
+        cerr<<"__________________________________"<<endl;
+        cerr<<"Order id: "<<id<<endl;
+        cerr<<"Broker: "<<broker<<endl;
+        cerr<<"Stock: "<<stock<<endl;
+        cerr<<"Price: "<<price<<endl;
+        cerr<<"quantity: "<<num<<endl;
+        cerr<<"TimeIN: "<<timeIN<<endl;
+        cerr<<"TimeEXP: "<<timeEXP<<endl;
+        cerr<<"bs: "<<bs<<endl;
+        cerr<<endl;
+        cerr<<"__________________________________"<<endl;
+        cerr<<endl;
     }
 
 };
@@ -290,17 +283,16 @@ class market{
                 que1.QDelete(temp);
                 x=*temp;
             }
+            cerr<<"1 ksdikcj"<<endl;
             this->deleteEXP(this->timer);
+            cerr<<"2 ksdikcj"<<endl;
             if(this->matchX(x)==0){
+                cerr<<"3 jswnfj"<<endl;
                 this->insert(x);
+                cerr<<4<<" inwifn"<<endl;
             }
-            
-
-            
-
-
+            cerr<<"repeat"<<endl;
         }
-
     }
     void deleteEXP(int time){
         for(int j = prevTEXP+1;j<=time;j++){
@@ -460,28 +452,7 @@ class market{
                 quote(ord2);
             }
 
-
-
-
-
-
-
-
-
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     }
@@ -522,30 +493,40 @@ void *handleClient(void *arg) {
             break;
         } else {
             // Print the received message
-            std::lock_guard<std::mutex> guard(::printMutex);
+            //std::lock_guard<std::mutex> guard(::printMutex);
             buffer[bytesRead] = '\0';
-            vector<order*> y;
+            //vector<order*> y;
             int i=0;
             while(true){
                 if(((buffer+i)==NULL)||buffer[i]==0||buffer[i]=='$'){
+                    cerr<<"something weird"<<endl;
+                    if(buffer[i]==0){
+                        cerr<<"0 spotted"<<endl;
+                    }
                     if(buffer[i]=='$'){
+                        cerr<<"dollar spotted"<<endl;
                         fl=0;
                     }
                     break;
                 }
                 order* x = new order(buffer+i,i,clientInfo->thread);
                 mkt->timer=x->timeIN;
+                //x->display();
+                //cerr<<endl<<"display over"<<endl;
                 if(mkt->qi==1){
                     mkt->que1.QInsert(x);
+                    //cerr<<mkt->qi<<" "<<" insertion over"<<mkt->que1.size()<<endl;
                 }
                 else{
                     mkt->que2.QInsert(x);
+                    //cerr<<mkt->qi<<" "<<" insertion over"<<mkt->que2.size()<<endl;
+
                 }
                 
                 //x->display();
             }
             //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            std::cout <<bytesRead<<" "<< buffer << std::endl;
+            //std::cout <<bytesRead<<" "<< buffer << std::endl;
         }
         if(fl==0){
             
@@ -556,24 +537,11 @@ void *handleClient(void *arg) {
 
     }
 
-
-
-
     // Close the client socket
     close(clientInfo->socket);
     delete clientInfo;
     pthread_exit(NULL);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 int main() {
@@ -590,7 +558,7 @@ int main() {
     // Initialize server address struct
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8888);  // Port number
+    serverAddr.sin_port = htons(8886);  // Port number
     serverAddr.sin_addr.s_addr = INADDR_ANY;
 
     // Bind server socket to the specified address and port
@@ -636,6 +604,7 @@ int main() {
         // Store the thread ID for later joining
         clientThreads.push_back(clientThread);
     }
+    cerr<<"market begins"<<endl;
     mkt.begin();
     // Join all client threads (clean up)
     for (auto &thread : clientThreads) {
