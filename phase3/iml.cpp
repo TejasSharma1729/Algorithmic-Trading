@@ -27,7 +27,6 @@ void* workerThread(void* arg) {
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1) {
         std::cerr << "Error creating socket." << std::endl;
-     
     }
 
     // Connect to the receiver
@@ -35,12 +34,25 @@ void* workerThread(void* arg) {
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(PORT);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-
+    // std::cout<<"Clientsocket: "<<clientSocket<<" port "<<std::endl;
     if (connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
         std::cerr << "Error connecting to receiver." << std::endl;
         close(clientSocket);
    
     }
+    sockaddr_in localAddress;
+    socklen_t addrLen = sizeof(localAddress);
+
+    if (getsockname(clientSocket, reinterpret_cast<struct sockaddr*>(&localAddress), &addrLen) == -1) {
+        std::cerr << "Error getting socket address" << std::endl;
+        close(clientSocket);
+    }
+    char ipStr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(localAddress.sin_addr), ipStr, INET_ADDRSTRLEN);
+    
+    std::cout << "Local address: " << ipStr << ":" << ntohs(localAddress.sin_port)<<" "<<thread_id << std::endl;
+    
+
 
     std::cout << "Connected to the receiver." << std::endl;
     std::ifstream inputFile("markets/market" + std::to_string(thread_id) + ".txt"); 
