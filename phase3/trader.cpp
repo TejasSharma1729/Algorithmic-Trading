@@ -1,5 +1,6 @@
 // Listening to a given port no 8888 and printing the incoming messages
 #include <iostream>
+#include<fstream>
 #include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -23,15 +24,9 @@ std::mutex printMutex;
 // Structure to store client socket and its details
 //34266
 //34262
-struct ClientInfo {
-    int socket;
-    struct sockaddr_in address;
-    int thread;
-    market* mkt;
-    //trader* killer;
-    ClientInfo(int socket, struct sockaddr_in& address,int i, market* m) : socket(socket), address(address), thread(i),mkt(m) {}
-    ClientInfo() {};
-};
+
+
+
 
 
 
@@ -203,6 +198,31 @@ struct order{
 };
 int order::idc = 0;
 
+void quote(order& y){
+    //string x = "KarGoExpress SELL AMD $120 #32 1";
+    string x="";
+    x+=to_string(y.timeIN);
+    x+=" ";
+    x+="tejassharma_yashjonjale";
+    if(y.bs==1){
+        x+=" BUY";
+    }
+    else{
+        x+=" SELL ";
+    }
+    x+=y.stock;
+    x+=" $";
+    x+=to_string(y.price);
+    x+=" #";
+    x+=to_string(y.num);
+    x+=" ";
+    x+=to_string(y.timeEXP-y.timeIN);
+    x+="\n";
+    std::fstream file("outputs/output"+to_string(y.thread)+".txt", std::ios::out);
+    file << x;
+    file.close();
+
+}
 
 
 class market{
@@ -211,22 +231,19 @@ class market{
         public:
         string name;
         int quant;
-        int thread;
         dict<order, int> bookBuy;
 		dict<int, dict<order, bool>> timeExpBuy;
 		dict<order, int> bookSell;
 		dict<int, dict<order, bool>> timeExpSell;
-        stock(string nm,int qnt=0,int thr):name(nm),quant(qnt),thread(thr){}
+        stock(string nm,int qnt=0):name(nm),quant(qnt){}
         bool operator == (const stock& B) const {
-			if (name!= B.name || quant != B.quant || thread!=B.thread) return false;
+			if (name!= B.name || quant != B.quant) return false;
 			return true;
 		}
 		bool operator < (const stock& B) const {
 			if(name<B.name)return true;
             if(name>B.name)return false;
             if(quant<B.quant)return true;
-            if(quant>B.quant)return false;
-            if(thread<B.thread)return true;
             return false;
 		}
 
@@ -236,16 +253,23 @@ class market{
     dict<stock,bool> stocks;
     Queue<order*> que1;
     Queue<order*> que2;
-    vector<int> eod;
+    int eod;
     int qi;
     int prevTEXP;
+    int profit=0;
     market(){
         qi=1;
         timer=0;
         prevTEXP=0;
+        eod=0;
+    }
+    void end(){
+        eod=1;
+        cout<<"Total Profits are: $"<<profit<<endl;
     }
     void begin(){
         while(true){
+            if(eod==1)return;
             order* x;
             order** temp;
             if(qi==1){
@@ -267,9 +291,10 @@ class market{
                 x=*temp;
             }
             this->deleteEXP(this->timer);
-            if(this->matchX(x)==1){
+            if(this->matchX(x)==0){
                 this->insert(x);
             }
+            
 
             
 
@@ -279,8 +304,8 @@ class market{
     }
     void deleteEXP(int time){
         for(int j = prevTEXP+1;j<=time;j++){
-            for(auto itr1 = stocks.begin();!itr1.isEnd();itr1++){
-                stock stk = itr1.key();
+            for(auto itr1 = stocks.begin();!itr1.isNull();itr1++){
+                stock& stk = itr1.key();
                 dict<order, bool> out = stk.timeExpBuy[j];
                 for (auto itr = out.begin(); !itr.isNull(); itr++) {
                     stk.bookBuy.remove(itr.key());
@@ -295,24 +320,76 @@ class market{
         }
 		return;
     }
+    
     int matchX(order* x){
-        for(auto itr = stocks.begin();!itr.isEnd();itr++){
+        for(auto itr = stocks.begin();!itr.isNull();itr++){
             if(itr.key().name!=x->stock)continue;
-            
+            stock& stk = itr.key();
             if(x->bs==1){
                 //buy
-                stock stk = 
+                int ToSell=x->num;
+                auto itr2 = stk.bookBuy.end();
+                for(;!itr2.isNull();itr2--){
+                    if(x->thread!=itr2.key().thread){
+                        continue;
+                    }
+                    if(ToSell<itr2.key().num){
+                        itr2.key().num-=ToSell;
+                        ToSell=0;
+                        break;
+                    }
+                    int n = itr2.key().num;
+                    int exp = itr2.key().timeEXP;
+                    ToSell-=n;
+                    stk.timeExpBuy[exp].remove(itr2.key());
+                    stk.bookBuy.remove(itr2.key());
+                    
+
+                }
+                if(ToSell==0)return 1;
+                else{
+                    x->num=ToSell;
+                    return 0;
+                }
+
+
+                
+
             }
             else{
                 //sell
+
+                int ToBuy=x->num;
+                auto itr2 = stk.bookSell.begin();
+                for(;!itr2.isNull();itr2++){
+                    if(x->thread!=itr2.key().thread){
+                        continue;
+                    }
+                    if(ToBuy<itr2.key().num){
+                        itr2.key().num-=ToBuy;
+                        ToBuy=0;
+                        break;
+                    }
+                    int n = itr2.key().num;
+                    int exp = itr2.key().timeEXP;
+                    ToBuy-=n;
+                    stk.timeExpSell[exp].remove(itr2.key());
+                    stk.bookSell.remove(itr2.key());
+                    
+
+                }
+                if(ToBuy==0)return 1;
+                else{
+                    x->num=ToBuy;
+                    return 0;
+                }
             }
 
-
-            break;
         }
+
     }
     void insert(order* x){
-        for(auto itr=stocks.begin();!itr.isEnd();itr++){   
+        for(auto itr=stocks.begin();!itr.isNull();itr++){   
 
             if(itr.key().name!=x->stock)continue;
 			
@@ -328,11 +405,97 @@ class market{
         }
     }
     void quote_arbitrage(){
+        auto top_itr = stocks.begin();
+        for(;!top_itr.isNull();top_itr++){
+            stock& stk = top_itr.key();
+            auto buybookitr = stk.bookBuy.end();
+            auto sellbookitr = stk.bookSell.begin();
+            int nbuy=0;
+            int nsell=0;
+            while(buybookitr.key().price>=(sellbookitr.key().price)&&!buybookitr.isNull()&&!sellbookitr.isNull()){
+                
+                buybookitr.key().num--;nbuy++;
+                profit+=buybookitr.key().price;
+                if(buybookitr.key().num==0){
+                    order ord1 = buybookitr.key();
+                    ord1.num=nbuy;
+                    ord1.timeIN=timer;
+                    quote(ord1);
+                    //int n = itr2.key().num;
+                    int exp = buybookitr.key().timeEXP;
+                    //ToSell-=n;
+                    stk.timeExpBuy[exp].remove(buybookitr.key());
+                    stk.bookBuy.remove(buybookitr.key());
+                    nbuy=0;
+                    buybookitr--;
+                }
+                sellbookitr.key().num--;nsell++;
+                profit-=sellbookitr.key().price;
+                if(sellbookitr.key().num==0){
+                    order ord2 = sellbookitr.key();
+                    ord2.num=nsell;
+                    ord2.timeIN=timer;
+                    quote(ord2);
+                    int exp = sellbookitr.key().timeEXP;
+                    //ToSell-=n;
+                    stk.timeExpSell[exp].remove(sellbookitr.key());
+                    stk.bookSell.remove(sellbookitr.key());
+                    nsell=0;
+                    sellbookitr++;
+                }
+
+
+
+            }
+            if(nbuy!=0){
+                order ord1 = buybookitr.key();
+                ord1.num=nbuy;
+                ord1.timeIN=timer;
+                quote(ord1);
+            }
+            if(nsell!=0){
+                order ord2 = sellbookitr.key();
+                ord2.timeIN=timer;
+                ord2.num=nsell;
+                quote(ord2);
+            }
+
+
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     }
 };
 
-
+struct ClientInfo {
+    int socket;
+    struct sockaddr_in address;
+    int thread;
+    market* mkt;
+    //trader* killer;
+    ClientInfo(int socket, struct sockaddr_in& address,int i, market* m) : socket(socket), address(address), thread(i),mkt(m) {}
+    ClientInfo() {};
+};
 
 // Function to handle a client connection
 void *handleClient(void *arg) {
@@ -367,7 +530,6 @@ void *handleClient(void *arg) {
                 if(((buffer+i)==NULL)||buffer[i]==0||buffer[i]=='$'){
                     if(buffer[i]=='$'){
                         fl=0;
-                        mkt->eod[clientInfo->thread-1]=1;
                     }
                     break;
                 }
@@ -446,7 +608,6 @@ int main() {
     std::cout << "Trader is listening on port 8888..." << std::endl;
     
     market mkt;
-    mkt.eod.resize(NUM_THREADS,0);
     std::vector<pthread_t> clientThreads;
 
     for(int i = 0; i < NUM_THREADS; i++) {
@@ -480,7 +641,7 @@ int main() {
     for (auto &thread : clientThreads) {
         pthread_join(thread, NULL);
     }
-
+    mkt.end();
     // Close the server socket (never reached in this example)
     close(serverSocket);
 
