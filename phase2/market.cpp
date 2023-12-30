@@ -87,7 +87,7 @@ void market::start()
 {
     int lastTime = 0;
     int line = 0;
-	string message;
+    string message;
     ifstream readFile("./output.txt");
     getline(readFile, message);
     getline(readFile, message);
