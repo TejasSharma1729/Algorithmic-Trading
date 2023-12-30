@@ -1,4 +1,0 @@
-Trader is listening on port 8888...
-0 Connected to client, IP: 127.0.0.1, Port: 57120
-1 Connected to client, IP: 127.0.0.1, Port: 57130
-Connected to client, IP: 127.0.0.1, Port: 57120
