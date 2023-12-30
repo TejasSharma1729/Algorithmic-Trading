@@ -1,4 +1,4 @@
-CXX=g++ -std=c++20 -lpthread -fsanitize=address,undefined -static-libsan
+CXX=g++ -std=c++20 -lpthread -fsanitize=address,undefined
 TRADERFILES=market.cpp trader.cpp main.cpp worker.cpp
 BLANKFILES=market.cpp blank_trader.cpp main.cpp worker.cpp
 
