@@ -115,10 +115,13 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 		if (bs == 'b') {
 			if (itr.val().buy >= price) {
 				cout << "No Trade\n";
+				return;
 			}
-			else if (itr.val().sell == price) {
+			else itr.val().buy = price;
+			if (itr.val().sell == price) {
 				cout << "No Trade\n";
 				itr.val().sell = INT_MAX;
+				itr.val().buy = INT_MIN;
 			}
 			else {
 				itr.val().buy = price;
@@ -132,9 +135,12 @@ void buyLowSellHigh(string order, dict<string, stockLowHigh>& stocks) {
 		else {
 			if (itr.val().sell <= price) {
 				cout << "No Trade\n";
+				return;
 			}
-			else if (itr.val().buy == price) {
+			else itr.val().sell = price;
+			if (itr.val().buy == price) {
 				cout << "No Trade\n";
+				itr.val().sell = INT_MAX;
 				itr.val().buy = INT_MIN;
 			}
 			else {
