@@ -7,16 +7,16 @@ template <typename T, typename U>
 struct Pair {
 	T first;
 	U second;
-	Pair() {}
-	Pair(T a, U b): first(a), second(b) {}
-	bool operator == (Pair& B) {
-		return (first == B.first && second == B.second);
-	}
-	bool operator < (Pair& B) {
-		if (first < B.first) return true;
-		if (first == B.first) return (second < B.second);
-		return false;
-	}
+    Pair() {}
+    Pair(T a, U b): first(a), second(b) {}
+    bool operator == (Pair& B) {
+        return (first == B.first && second == B.second);
+    }
+    bool operator < (Pair& B) {
+        if (first < B.first) return true;
+        if (first == B.first) return (second < B.second);
+        return false;
+    }
 };
 
 /*
@@ -442,20 +442,20 @@ template <typename V>
 		}
 	}
 
-	rbNode* root;
-	int length;
+	rbNode* root = nullptr;
+	int length = 0;
 
 public:
 	dict() {root = nullptr; length = 0;}
 	dict(dict& Oth) {
-		if (Oth.root == root) return;
 		length = Oth.length;
+		if (root == nullptr || Oth.root == root) return; else root->destroy();
 		if (Oth.root != nullptr) root = Oth.root->copy();
 		else root = nullptr;
 	}
 	void operator = (dict& Oth) {
-		if (Oth.root == root) return;
 		length = Oth.length;
+		if (root == nullptr || Oth.root == root) return; else root->destroy();
 		if (Oth.root != nullptr) root = Oth.root->copy();
 		else root = nullptr;
 	}
