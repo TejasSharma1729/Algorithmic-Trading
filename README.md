@@ -105,19 +105,6 @@ Much like the above part, you can run your code as follows.
 make trader
 ```
 
-## Phase Three
-Phew! That has laid down the foundation for a large part of the Autotrader. We now have the capacity to make optimal trading decisions as well as execute them on the market by placing priority-sensitive orders (albeit with a tradeoff). But yet, one essential component is missing. And that missing component is...drumroll...statistical arbitrage. Oh! Arbitrage again? "Statistical arbitrage (or stat arb) refers to a group of trading strategies that utilize mean reversion analyses. Statistical arbitrage strategies are market-neutral because they simultaneously open long and short positions to take advantage of inefficient pricing in correlated securities. Known as a deeply quantitative, analytical approach to trading, stat arb aims to reduce exposure to beta as much as possible across two phases: "scoring" provides a ranking to each available stock according to investment desirability, and "risk reduction" combines desirable stocks into a specifically-designed portfolio aiming to lower risk." That was a lot to take in! Let us simplify.
-
-Consider we have correlated stocks. For simplicity, we will consider a stock that has a unit correlation with itself. What does this mean? It means that if the price of a stock goes up in one market, it should go up in another. But does it? In this phase, we will be performing arbitrage across markets. There will be different markets, and we have different information lines providing data to us across different markets. Your goal is to process this information obtained from different markets and identify opportunities for arbitrage. You will output the corresponding order in all the markets. For instance,
-
-Suppose we get an input of 3 ASML 100 10 b# from one market and 4 ASML 95 20 s# from another. Then, we must output 4 ASML 100 10 s# in one trace file for one market and 4 ASML 95 10 b# in the other, assuming both orders are available in both markets at t = 4. Print ONLY your projected profit to standard output. Trace file i is named "output&lt;i&gt;.txt"
-
-### Input/Output Details
-Input is taken from inputs/input&lt;i&gt;.txt, where i is the index of the market (not the financial index). Outputs should be in outputs/output&lt;i&gt;.txt for the trace file of the i-th market. You can run phase3 as follows:
-```
-make
-```
-
 ## Approach
 Finally, this concludes the problem statement. However, here are some directions regarding how you should go about coding these algorithms.
 *    Sockets: sockets are used to connect between programs and communicate between programs. **You do not need to worry too much about how they work**. The relevant code to handle this communication has been provided to you already. You need to use it correctly.
@@ -131,7 +118,7 @@ Finally, this concludes the problem statement. However, here are some directions
 _P.S.: Depending on your OS, you may have to change the template code slightly to run it on your machine._
 
 ## Submission Instructions
-This project is to be done in groups of **at most two students**. Each team should submit one tarball named &lt;rollno1&gt;\_&lt;rollno2&gt;.tar.gz on Moodle, where all letters should be in lowercase. On untarring, we should get a folder named &lt;rollno1\_rollno2&gt;. Inside, there should be 3 sub-folders, labeled 'phase 1', 'phase 2', and 'phase 3', each sub-folder containing only the files you have created + files you were supposed to modify within each phase. NO other files can be included. Do NOT include any Makefile in your submission. Refer to the following directory structure:
+This project is to be done in groups of **at most two students**. Each team should submit one tarball named &lt;rollno1&gt;\_&lt;rollno2&gt;.tar.gz on Moodle, where all letters should be in lowercase. On untarring, we should get a folder named &lt;rollno1\_rollno2&gt;. Inside, there should be 3 sub-folders, labeled 'phase 1' and 'phase 2' each sub-folder containing only the files you have created + files you were supposed to modify within each phase. NO other files can be included. Do NOT include any Makefile in your submission. Refer to the following directory structure:
 ```
 rollno1_rollno2
 |
@@ -139,9 +126,6 @@ rollno1_rollno2
 |    |--- <all modified code files>
 |
 |--- phase2
-|    |--- <all modified code files>
-|
-|--- phase3
      |--- <all modified code files>
 ```
 
