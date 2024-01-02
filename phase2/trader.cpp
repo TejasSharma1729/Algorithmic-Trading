@@ -501,9 +501,13 @@ int reader(int time)
     file.seekg(Trader::seekPos, ios::cur);
     string* message = new string [1];
     std::getline(file, message[0]);
-    while (message[0] != "") {
+    while (message[0] != "") 
+	{
         Trader::seekPos += message[0].length() + 1;
-        if (message[0][0] == '!') return 0;
+        if (message[0][0] == '!') {
+			delete [] message;
+			return 0;
+		}
         if (message[0].length() >= 10 && message[0][0] != '(') trader(message);
         message[0] = "";
         std::getline(file, message[0]);
@@ -513,6 +517,7 @@ int reader(int time)
 	*(int*)timer = commonTimer.load();
 	userTrader(timer);
 	free(timer);
+	delete [] message;
     return 1;
 }
 
