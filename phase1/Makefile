@@ -1,10 +1,10 @@
 all: trader iml
 
 trader: trader.cpp receiver.h
-	g++ -g -fsanitize=undefined,address -std=c++20 trader.cpp -o trader
+	clang++ -fuse-ld=lld -g -fsanitize=undefined,address,leak,bounds -std=c++23 trader.cpp -o trader
 
 iml: iml.cpp
-	g++ -g -fsanitize=undefined,address -std=c++20 iml.cpp -o iml
+	clang++ -fuse-ld=lld -g -fsanitize=undefined,address,leak,bounds -std=c++23 iml.cpp -o iml
 
 runpart1: iml trader
 	./trader 1 > output.txt &
