@@ -8,18 +8,22 @@
 #include <string>
 #include <atomic>
 #include <mutex>
+#include <cassert>
 
 const int NUM_STEPS = 100000;
 extern std::atomic<int> commonTimer;
 extern std::mutex printMutex;
 
-void* workerThread(void* arg) {
+void* workerThread(void* arg) 
+{
     int thread_id = ((int*)(arg))[0];
     int testcase = ((int*)(arg))[1];
     delete [] (int*)arg;
-    std::ifstream inputFile("testcases/inputs" + std::to_string(testcase) + "/input" + std::to_string(thread_id) + ".txt");
+    std::ifstream inputFile("testcases/inputs" + std::to_string(testcase) + 
+            "/input" + std::to_string(thread_id) + ".txt");
     std::string line;
-    for (int step = 0; step < NUM_STEPS; ++step) {
+    for (int step = 0; step < NUM_STEPS; ++step) 
+    {
         int currentTime;
         // Perform some work based on the current time
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate work

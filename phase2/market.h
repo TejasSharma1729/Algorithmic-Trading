@@ -1,9 +1,10 @@
 #ifndef MARKET_H
 #define MARKET_H
-#include <string>
-#include <vector>
-#include <climits>
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <climits>
 #include "../dict.h"
 using namespace std;
 
@@ -18,24 +19,37 @@ class market
 		int qty;
 		order(): line(0), timeIn(0), price(0), person(""), qty(0) {}
 
-		bool operator < (const order& B) const {
-			if (price < B.price) return true;
-			else if (price > B.price) return false;
-			if (timeIn < B.timeIn) return true;
-			else if (timeIn > B.timeIn) return false;
-			if (person < B.person) return true;
-			else if (person > B.person) return false;
-			if (timeExp < B.timeExp) return true;
-			else if (timeExp > B.timeExp) return false;
-			if (line < B.line) return true;
-			else if (line > B.line) return false;
-			if (qty < B.qty) return true;
-            else return false;
-		}
 		bool operator == (const order& B) const {
-			return (line == B.line && timeIn == B.timeIn && timeExp == B.timeExp && price == B.price && person == B.person && qty == B.qty);
+			return (line == B.line && timeIn == B.timeIn && timeExp == B.timeExp && 
+                    price == B.price && person == B.person && qty == B.qty);
 		}
+
+        std::strong_ordering operator <=> (const order& B) const
+        {
+            if (price != B.price) return (price <=> B.price);
+            if (timeIn != B.timeIn) return (timeIn <=> B.timeIn);
+            if (person != B.person) return (person <=> B.person);
+            if (timeExp != B.timeExp) return (timeExp <=> B.timeExp);
+            if (line != B.line) return (line <=> B.line);
+            return (qty <=> B.qty);
+        }
 	};
+
+    /*
+    bool operator == (const order& A, const order& B) {
+		return (A.line == B.line && A.timeIn == B.timeIn && A.timeExp == B.timeExp && 
+                    A.price == B.price && A.person == B.person && A.qty == B.qty);
+    }
+
+    auto operator <=> (const order& A, const order& B) {
+            if (A.price != B.price) return (A.price <=> B.price);
+            if (A.timeIn != B.timeIn) return (A.timeIn <=> B.timeIn);
+            if (A.person != B.person) return (A.person <=> B.person);
+            if (A.timeExp != B.timeExp) return (A.timeExp <=> B.timeExp);
+            if (A.line != B.line) return (A.line <=> B.line);
+            return (A.qty <=> B.qty);
+    }
+    */
 
 	struct personOrders {
 		int bought = 0;
@@ -104,7 +118,8 @@ class market
 			}
 		}
 
-		void transact(dict<string, personOrders>& peoples, long& netExchange, int& numTrades, long& numSharedTrades) {
+		void transact(dict<string, personOrders>& peoples, 
+                long& netExchange, int& numTrades, long& numSharedTrades) {
 			vector<order> bought;
 			vector<order> sold;
 			auto itr = bookBuy.end();
@@ -115,12 +130,14 @@ class market
 					int q1 = itr.key().qty;
 					int q2 = jtr.key().qty;
 					int price;
-					if (jtr.key().line > itr.key().line) price = itr.key().price; else price = jtr.key().price;
+					if (jtr.key().line > itr.key().line) 
+                        price = itr.key().price; else price = jtr.key().price;
 
 					if (q2 > q1) {
 						cout << itr.key().person << " purchased ";
 						printname(q1);
-						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
+						cout << " from " << jtr.key().person << 
+                            " for $" << 1.0*price/numTransacted << "/share\n";
 						bought.push_back(itr.key());
 
 						auto& A = peoples[itr.key().person];
@@ -146,7 +163,8 @@ class market
 					else if (q1 > q2) {
 						cout << itr.key().person << " purchased ";
 						printname(q2);
-						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
+						cout << " from " << jtr.key().person << 
+                            " for $" << 1.0*price/numTransacted << "/share\n";
 						sold.push_back(jtr.key());
 
 						auto& A = peoples[itr.key().person];
@@ -169,7 +187,8 @@ class market
 					else {
 						cout << itr.key().person << " purchased ";
 						printname(q1);
-						cout << " from " << jtr.key().person << " for $" << 1.0*price/numTransacted << "/share\n";
+						cout << " from " << jtr.key().person << 
+                            " for $" << 1.0*price/numTransacted << "/share\n";
 
 						auto& A = peoples[itr.key().person];
 						A.bought += numTransacted*q1;
@@ -201,25 +220,22 @@ class market
 
 		bool operator == (const stock& B) const {
 			if (name.size() != B.name.size()) return false;
-			for (int i = 0; i < (int)name.size(); i++) if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
+			for (int i = 0; i < (int)name.size(); i++) 
+                if (name[i] != B.name[i] || quant[i] != B.quant[i]) 
+                    return false;
 			return true;
 		}
-		bool operator < (const stock& B) const {
-			int i = 0;
-			while (true) {
-				if (i == (int)name.size()) return (B.name.size() > name.size());
-				if (i == (int)B.name.size()) return false;
-				if (name[i] < B.name[i]) return true;
-				else if (name[i] == B.name[i]) {
-					if (quant[i] == B.quant[i]) {
-						i++;
-						continue;
-					}
-					return (quant[i] < B.quant[i]);
-				}
-				else return false;
-			}
-		}
+
+        std::strong_ordering operator <=> (const stock& B) const {
+            int i = 0;
+            while (true) {
+                if (i == (int)name.size() || i == (int)B.name.size()) 
+                    return (name.size() <=> B.name.size());
+                if (name[i] != B.name[i]) return (name[i] <=> B.name[i]);
+                if (quant[i] != B.quant[i]) return (quant[i] <=> B.quant[i]);
+                i++;
+            }
+        }
 	};
 	dict<stock, bool> stocks;
 

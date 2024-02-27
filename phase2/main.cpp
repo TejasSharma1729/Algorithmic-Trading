@@ -1,12 +1,12 @@
 #include <iostream>
-#include <thread>
-#include <chrono>
-#include <atomic>
 #include <mutex>
+#include <atomic>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include <pthread.h>
+#include <chrono>
 #include "market.h"
 
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
         arg[0] = (i+1);
         arg[1] = inputNum;
         pthread_t clientThread;
-        if (pthread_create(&clientThread, NULL, &workerThread, (void*)arg) != 0) {
+        if (pthread_create(&clientThread, nullptr, &workerThread, (void*)arg) != 0) {
             perror("Thread creation error");
             continue;  // Continue listening for other connections
         }
@@ -50,19 +50,19 @@ int main(int argc, char** argv) {
     }
 
     pthread_t clientThread;
-    if (pthread_create(&clientThread, NULL, &userThread,(void*) &NUM_THREADS) != 0) {
+    if (pthread_create(&clientThread, nullptr, &userThread,(void*) &NUM_THREADS) != 0) {
         perror("Thread creation error");
     }
     clientThreads.push_back(clientThread);
 
     // Join all worker threads
     for (int i = 0; i < NUM_THREADS; ++i) {
-        pthread_join(clientThreads[i], NULL);
+        pthread_join(clientThreads[i], nullptr);
     }
 
     std::cout << "!@" << std::endl; // Indicates the end of market input
 
-    pthread_join(clientThreads[NUM_THREADS], NULL);
+    pthread_join(clientThreads[NUM_THREADS], nullptr);
 
     std::cout << "@!" << std::endl; // Indicates the end of user input
 

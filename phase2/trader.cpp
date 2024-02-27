@@ -5,8 +5,8 @@
 #include <climits>
 #include <string>
 #include <vector>
-#include <chrono>
 #include <thread>
+#include <chrono>
 #include <atomic>
 #include <mutex>
 #include "../dict.h"
@@ -21,7 +21,7 @@ namespace Trader {
     struct dynamicMedian {
         vector<int> left;
         vector<int> right;
-        int mid = INT_MIN;
+        int mid = numeric_limits<int>::min();
 
         void swap(int& a, int& b) {
             int temp = a;
@@ -30,18 +30,18 @@ namespace Trader {
         }
 
         bool empty() {
-            if (mid != INT_MIN) return 0;
+            if (mid != numeric_limits<int>::min()) return 0;
             return (left.empty());
         }
         int median() {
-            if (mid == INT_MIN) {
-                if (left.size() == 0) return INT_MIN;
+            if (mid == numeric_limits<int>::min()) {
+                if (left.size() == 0) return numeric_limits<int>::min();
                 return (left[0] + right[0])/2;
             }
             else return mid;
         }
         void insert(int x) {
-            if (mid == INT_MIN) {mid = x; return;}
+            if (mid == numeric_limits<int>::min()) {mid = x; return;}
             int s = left.size();
             int t = right.size();
             if (x >= mid) {
@@ -51,7 +51,7 @@ namespace Trader {
                 left.push_back(x);
                 right.push_back(mid);
             }
-            mid = INT_MIN;
+            mid = numeric_limits<int>::min();
 
             while (s > 0) {
                 if (left[s] > left[(s-1)/2]) {
@@ -70,27 +70,24 @@ namespace Trader {
     struct stockStruct {
         vector<string> name;
         vector<int> quant;
+
         bool operator == (const stockStruct& B) const {
 			if (name.size() != B.name.size()) return false;
-			for (int i = 0; i < (int)name.size(); i++) if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
+			for (int i = 0; i < (int)name.size(); i++) 
+                if (name[i] != B.name[i] || quant[i] != B.quant[i]) return false;
 			return true;
 		}
-		bool operator < (const stockStruct& B) const {
-			int i = 0;
-			while (true) {
-				if (i == (int)name.size()) return (B.name.size() > name.size());
-				if (i == (int)B.name.size()) return false;
-				if (name[i] < B.name[i]) return true;
-				else if (name[i] == B.name[i]) {
-					if (quant[i] == B.quant[i]) {
-						i++;
-						continue;
-					}
-					return (quant[i] < B.quant[i]);
-				}
-				else return false;
-			}
-		}
+
+        std::strong_ordering operator <=> (const stockStruct& B) const {
+            int i = 0;
+            while (true) {
+                if (i == (int)name.size() || i == (int)B.name.size()) 
+                    return (name.size() <=> B.name.size());
+                if (name[i] != B.name[i]) return (name[i] <=> B.name[i]);
+                if (quant[i] != B.quant[i]) return (quant[i] <=> B.quant[i]);
+                i++;
+            }
+        }
     };
     dict<stockStruct, dynamicMedian> medianPrices;
     dict<string, int> withMe;
@@ -150,7 +147,8 @@ int trader(std::string *message)
     j++;
 
     int retTime;
-    while (j < (int)order.length() && order[j] != ' ' && order[j] != 13 && order[j] != 10 && order[j] != 0) num += order[j++];
+    while (j < (int)order.length() && order[j] != ' ' && 
+            order[j] != 13 && order[j] != 10 && order[j] != 0) num += order[j++];
     retTime = stoi(num);
     int timeExp = retTime + currentTime;
 
@@ -167,8 +165,10 @@ int trader(std::string *message)
             current.quant.push_back(1);
             outPut += stockName + " ";
             otherPut += stockName + " ";
-            squareNow += (long)Trader::withMe[stockName] * Trader::withMe[stockName];
-            squareDiff += ((long)Trader::withMe[stockName] + buyOrd) *((long)Trader::withMe[stockName] + buyOrd);
+            squareNow += (long)Trader::withMe[stockName] * 
+                Trader::withMe[stockName];
+            squareDiff += ((long)Trader::withMe[stockName] + buyOrd) * 
+                ((long)Trader::withMe[stockName] + buyOrd);
         }
         else {
             string num = "";
@@ -176,8 +176,10 @@ int trader(std::string *message)
             i++;
             int n = stoi(num);
             current.quant.push_back(n);
-            squareNow += (long)Trader::withMe[stockName] * Trader::withMe[stockName];
-            squareDiff += ((long)Trader::withMe[stockName] + buyOrd*n) *((long)Trader::withMe[stockName] + buyOrd*n);
+            squareNow += (long)Trader::withMe[stockName] * 
+                Trader::withMe[stockName];
+            squareDiff += ((long)Trader::withMe[stockName] + buyOrd*n) * 
+                ((long)Trader::withMe[stockName] + buyOrd*n);
             outPut += stockName + " " + num + " ";
             otherPut += stockName + " " + num + " ";
         }
@@ -191,14 +193,20 @@ int trader(std::string *message)
 
     if (buyOrd == 1) {
         if (price < Trader::medianPrices[current].median()) {
-            for (int i = 0; i < (int)current.name.size(); i++) {
-                squareNow -= (long)Trader::withMe[current.name[i]] * Trader::withMe[current.name[i]];
-                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) *((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+            for (int i = 0; i < (int)current.name.size(); i++) 
+            {
+                squareNow -= (long)Trader::withMe[current.name[i]] * 
+                    Trader::withMe[current.name[i]];
+                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
+                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
                 Trader::withMe[current.name[i]] += current.quant[i]*quantity;
-                squareNow += (long)Trader::withMe[current.name[i]] * Trader::withMe[current.name[i]];
-                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) *((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+                squareNow += (long)Trader::withMe[current.name[i]] * 
+                    Trader::withMe[current.name[i]];
+                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
+                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
             }
-			string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + " " + to_string(retTime) + "\r";
+			string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + 
+                " " + to_string(retTime) + "\r";
 			if (quantity > 0) std::cout << print << "\n"; 
 			//Trader::seekPos += print.length() + 1;
         }
@@ -208,15 +216,22 @@ int trader(std::string *message)
         }
     }
     else {
-        if (Trader::medianPrices[current].median() != INT_MIN && price > Trader::medianPrices[current].median()) {
-            for (int i = 0; i < (int)current.name.size(); i++) {
-                squareNow += (long)Trader::withMe[current.name[i]] * Trader::withMe[current.name[i]];
-                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) *((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+        if (Trader::medianPrices[current].median() != numeric_limits<int>::min() && 
+                price > Trader::medianPrices[current].median()) {
+            for (int i = 0; i < (int)current.name.size(); i++) 
+            {
+                squareNow += (long)Trader::withMe[current.name[i]] * 
+                    Trader::withMe[current.name[i]];
+                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
+                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
                 Trader::withMe[current.name[i]] -= current.quant[i]*quantity;
-                squareNow -= (long)Trader::withMe[current.name[i]] * Trader::withMe[current.name[i]];
-                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) *((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+                squareNow -= (long)Trader::withMe[current.name[i]] * 
+                    Trader::withMe[current.name[i]];
+                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
+                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
             }
-            string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + " " + to_string(retTime) + "\r";
+            string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + 
+                " " + to_string(retTime) + "\r";
 			if (quantity > 0) std::cout << print << "\n"; 
 			//Trader::seekPos += print.length() + 1;
         }
@@ -230,10 +245,11 @@ int trader(std::string *message)
     auto itr = Dict_C.first.begin();
     auto jtr = Dict_C.second.end();
     unsigned long madeTrans = 0;
-	int minExp = INT_MAX;
+	int minExp = numeric_limits<int>::max();
 
     if (squareDiff < squareNow) {
-        if (buyOrd == 1) {
+        if (buyOrd == 1) 
+        {
             while (!itr.isNull() && squareDiff < squareNow) {
 	            auto ktr = itr.val().begin();
 				if (ktr.isNull()) {
@@ -242,41 +258,48 @@ int trader(std::string *message)
 				if (ktr.key() > currentTime) minExp = std::min(minExp, ktr.key() - currentTime);
                 ktr.val()--;
                 Dict_D[ktr.key()].first[itr.key()]--;
-                if (ktr.val() == 0) {
+                if (ktr.val() == 0) 
+                {
                     auto ltr = ktr;
                     ktr++;
                     Dict_D[ltr.key()].first.remove(itr.key());
                     itr.val().remove(ltr.key());
                 }
                 madeTrans++;
-                if (ktr.isNull()) {
-					if (minExp == INT_MAX) minExp = -1;
-					string print = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+                if (ktr.isNull()) 
+                {
+					if (minExp == numeric_limits<int>::max()) minExp = -1;
+					string print = outPut + "$" + to_string(itr.key()) + " #" + 
+                        to_string(madeTrans) + " " + to_string(minExp) + "\r";
 					//Trader::seekPos += print.length() + 1;
                     if (madeTrans > 0) std::cout << print << "\n";
                     madeTrans = 0;
-					minExp = INT_MAX;
+					minExp = numeric_limits<int>::max();
                     auto kt = itr;
                     itr++;
                     Dict_C.first.remove(kt.key());
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) {
+                for (int i = 0; i < (int)current.name.size(); i++) 
+                {
                     int x = Trader::withMe[current.name[i]] + current.quant[i];
                     squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
                     Trader::withMe[current.name[i]] = x;
                 }
             }
-            if (!itr.isNull()) {
-				if (minExp == INT_MAX) minExp = -1;
-				string print = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+            if (!itr.isNull()) 
+            {
+				if (minExp == numeric_limits<int>::max()) minExp = -1;
+				string print = outPut + "$" + to_string(itr.key()) + " #" + 
+                    to_string(madeTrans) + " " + to_string(minExp) + "\r";
 				//Trader::seekPos += print.length() + 1;
 				if (madeTrans > 0) std::cout << print << "\n";
 			}
         }
         else {
-            while (!jtr.isNull() && squareDiff < squareNow) {
+            while (!jtr.isNull() && squareDiff < squareNow) 
+            {
                 auto ktr = jtr.val().begin();
 				if (ktr.isNull()) {
 					jtr--; continue;
@@ -284,35 +307,41 @@ int trader(std::string *message)
 				if (ktr.key() > currentTime) minExp = std::min(minExp, ktr.key() - currentTime);
                 ktr.val()--;
                 Dict_D[ktr.key()].second[jtr.key()]--;
-                if (ktr.val() == 0) {
+                if (ktr.val() == 0) 
+                {
                     Dict_D[ktr.key()].second.remove(jtr.key());
                     auto ltr = ktr;
                     ktr++;
                     jtr.val().remove(ltr.key());
                 }
                 madeTrans++;
-                if (ktr.isNull()) {
-					if (minExp == INT_MAX) minExp = -1;
-                    string print = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+                if (ktr.isNull()) 
+                {
+					if (minExp == numeric_limits<int>::max()) minExp = -1;
+                    string print = outPut + "$" + to_string(jtr.key()) + " #" + 
+                        to_string(madeTrans) + " " + to_string(minExp) + "\r";
 					//Trader::seekPos += print.length() + 1;
                     if (madeTrans > 0) std::cout << print << "\n"; 
                     madeTrans = 0;
-					minExp = INT_MAX;
+					minExp = numeric_limits<int>::max();
                     auto kt = jtr;
                     jtr--;
                     Dict_C.second.remove(kt.key());
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) {
+                for (int i = 0; i < (int)current.name.size(); i++) 
+                {
                     int x = Trader::withMe[current.name[i]] - current.quant[i];
                     squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
                     Trader::withMe[current.name[i]] = x;
                 }
             }
-            if (!jtr.isNull()) {
-				if (minExp == INT_MAX) minExp = -1;
-				string print = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+            if (!jtr.isNull()) 
+            {
+				if (minExp == numeric_limits<int>::max()) minExp = -1;
+				string print = outPut + "$" + to_string(jtr.key()) + " #" + 
+                    to_string(madeTrans) + " " + to_string(minExp) + "\r";
 				//Trader::seekPos += print.length() + 1;
 				if (madeTrans > 0) std::cout << print << "\n";
 			}
@@ -320,13 +349,15 @@ int trader(std::string *message)
     }
     else {
         squareDiff = 0;
-        for (int i = 0; i < (int)current.name.size(); i++) {
+        for (int i = 0; i < (int)current.name.size(); i++) 
+        {
             int x = Trader::withMe[current.name[i]] - current.quant[i];
             squareDiff += (x - buyOrd*current.quant[i]) * (x - buyOrd*current.quant[i]);
             Trader::withMe[current.name[i]] = x;
         }
         if (buyOrd == 1) {
-            while (!jtr.isNull() && squareDiff < squareNow) {
+            while (!jtr.isNull() && squareDiff < squareNow) 
+            {
                 auto ktr = jtr.val().begin();
 				if (ktr.isNull()) {
 					jtr--; continue;
@@ -334,41 +365,48 @@ int trader(std::string *message)
 				if (ktr.key() > currentTime) minExp = std::min(minExp, ktr.key() - currentTime);
                 ktr.val()--;
                 Dict_D[ktr.key()].second[jtr.key()]--;
-                if (ktr.val() == 0) {
+                if (ktr.val() == 0) 
+                {
                     Dict_D[ktr.key()].second.remove(jtr.key());
                     auto ltr = ktr;
                     ktr++;
                     jtr.val().remove(ltr.key());
                 }
                 madeTrans++;
-                if (ktr.isNull()) {
-					if (minExp == INT_MAX) minExp = -1;
-                    string print = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+                if (ktr.isNull()) 
+                {
+					if (minExp == numeric_limits<int>::max()) minExp = -1;
+                    string print = otherPut + "$" + to_string(jtr.key()) + " #" + 
+                        to_string(madeTrans) + " " + to_string(minExp) + "\r";
 					//Trader::seekPos += print.length() + 1;
                     if (madeTrans > 0) std::cout << print << "\n";
                     madeTrans = 0;
-					minExp = INT_MAX;
+					minExp = numeric_limits<int>::max();
                     auto kt = jtr;
                     jtr--;
                     Dict_C.second.remove(kt.key());
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) {
+                for (int i = 0; i < (int)current.name.size(); i++) 
+                {
                     int x = Trader::withMe[current.name[i]] - current.quant[i];
                     squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
                     Trader::withMe[current.name[i]] = x;
                 }
             }
-            if (!jtr.isNull()) {
-				if (minExp == INT_MAX) minExp = -1;
-				string print = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+            if (!jtr.isNull()) 
+            {
+				if (minExp == numeric_limits<int>::max()) minExp = -1;
+				string print = otherPut + "$" + to_string(jtr.key()) + " #" + 
+                    to_string(madeTrans) + " " + to_string(minExp) + "\r";
 				//Trader::seekPos += print.length() + 1;
 				if (madeTrans > 0) std::cout << print << "\n";
 			}
         }
         else {
-            while (!itr.isNull() && squareDiff < squareNow) {
+            while (!itr.isNull() && squareDiff < squareNow) 
+            {
                 auto ktr = itr.val().begin();
 				if (ktr.isNull()) {
 					itr++; continue;
@@ -376,55 +414,65 @@ int trader(std::string *message)
 				if (ktr.key() > currentTime) minExp = std::min(minExp, ktr.key() - currentTime);
                 ktr.val()--;
                 Dict_D[ktr.key()].first[itr.key()]--;
-                if (ktr.val() == 0) {
+                if (ktr.val() == 0) 
+                {
                     auto ltr = ktr;
                     ktr++;
                     Dict_D[ltr.key()].first.remove(itr.key());
                     itr.val().remove(ltr.key());
                 }
                 madeTrans++;
-                if (ktr.isNull()) {
-					if (minExp == INT_MAX) minExp = -1;
-                    string print = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+                if (ktr.isNull()) 
+                {
+					if (minExp == numeric_limits<int>::max()) minExp = -1;
+                    string print = otherPut + "$" + to_string(itr.key()) + " #" + 
+                        to_string(madeTrans) + " " + to_string(minExp) + "\r";
 					//Trader::seekPos += print.length() + 1;
                     if (madeTrans > 0) std::cout << print << "\n";
                     madeTrans = 0;
-					minExp = INT_MAX;
+					minExp = numeric_limits<int>::max();
                     auto kt = itr;
                     itr++;
                     Dict_C.first.remove(kt.key());
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) {
+                for (int i = 0; i < (int)current.name.size(); i++) 
+                {
                     int x = Trader::withMe[current.name[i]] + current.quant[i];
                     squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
                     Trader::withMe[current.name[i]] = x;
                 }
             }
-            if (!itr.isNull()) {
-				if (minExp == INT_MAX) minExp = -1;
-				string print = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+            if (!itr.isNull()) 
+            {
+				if (minExp == numeric_limits<int>::max()) minExp = -1;
+				string print = otherPut + "$" + to_string(itr.key()) + " #" + 
+                    to_string(madeTrans) + " " + to_string(minExp) + "\r";
 				//Trader::seekPos += print.length() + 1;
 				if (madeTrans > 0) std::cout << print << "\n";
 			}
         }
     }
 	// Clear out extra stocks with us.
-	minExp = INT_MAX;
+	minExp = numeric_limits<int>::max();
 
     while (!itr.isNull() && !jtr.isNull() && itr.key() < jtr.key()) {
         madeTrans = 0;
         auto ktr = itr.val().begin();
         auto ltr = jtr.val().begin();
 
-        while (!ktr.isNull() && !ltr.isNull()) {
+        while (!ktr.isNull() && !ltr.isNull()) 
+        {
             madeTrans++;
-			if (ktr.key() > currentTime) minExp = std::min(minExp, ktr.key() - currentTime);
-			if (ltr.key() > currentTime) minExp = std::min(minExp, ltr.key() - currentTime);
+			if (ktr.key() > currentTime) 
+                minExp = std::min(minExp, ktr.key() - currentTime);
+			if (ltr.key() > currentTime) 
+                minExp = std::min(minExp, ltr.key() - currentTime);
             ktr.val()--;
             Dict_D[ktr.key()].first[itr.key()]--;
-            if (ktr.val() <= 0) {
+            if (ktr.val() <= 0) 
+            {
                 auto mtr = ktr;
                 ktr++;
                 Dict_D[mtr.key()].first.remove(itr.key());
@@ -432,23 +480,29 @@ int trader(std::string *message)
             }
             ltr.val()--;
             Dict_D[ltr.key()].second[jtr.key()]--;
-            if (ltr.val() <= 0) {
+            if (ltr.val() <= 0) 
+            {
                 auto mtr = ltr;
                 ltr++;
                 Dict_D[mtr.key()].second.remove(jtr.key());
                 jtr.val().remove(mtr.key());
             }
         }
-		if (minExp == INT_MAX) minExp = -1;
+		if (minExp == numeric_limits<int>::max()) 
+            minExp = -1;
         if (buyOrd == 1) {
-			string print1 = outPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
-			string print2 = otherPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+			string print1 = outPut + "$" + to_string(itr.key()) + " #" + 
+                to_string(madeTrans) + " " + to_string(minExp) + "\r";
+			string print2 = otherPut + "$" + to_string(jtr.key()) + " #" + 
+                to_string(madeTrans) + " " + to_string(minExp) + "\r";
 			if (madeTrans > 0) std::cout << print1 << "\n" << print2 << "\n";
 			//Trader::seekPos += print1.length() + print2.length() + 2;
         }
         else {
-            string print1 = otherPut + "$" + to_string(itr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
-			string print2 = outPut + "$" + to_string(jtr.key()) + " #" + to_string(madeTrans) + " " + to_string(minExp) + "\r";
+            string print1 = otherPut + "$" + to_string(itr.key()) + " #" + 
+                to_string(madeTrans) + " " + to_string(minExp) + "\r";
+			string print2 = outPut + "$" + to_string(jtr.key()) + " #" + 
+                to_string(madeTrans) + " " + to_string(minExp) + "\r";
 			if (madeTrans > 0) std::cout << print1 << "\n" << print2 << "\n";
 			//Trader::seekPos += print1.length() + print2.length() + 2;
         }
@@ -462,7 +516,7 @@ int trader(std::string *message)
             jtr--;
             Dict_C.second.remove(mtr.key());
         }
-		minExp = INT_MAX;
+		minExp = numeric_limits<int>::max();
     }
 	// Arbitrage
     return 0;

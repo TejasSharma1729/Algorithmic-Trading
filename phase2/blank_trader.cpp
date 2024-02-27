@@ -2,7 +2,7 @@
 // DO NOT MODIFY THIS FILE
 //---------------------------------------
 
-#include <string>
+import std;
 
 int reader(int time)
 {

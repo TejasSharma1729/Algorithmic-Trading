@@ -1,7 +1,4 @@
 #include "market.h"
-#include <fstream>
-#include <string>
-#include <vector>
 using namespace std;
 
 int market::split(string message, int prevT, int line) {
@@ -30,7 +27,10 @@ int market::split(string message, int prevT, int line) {
     now.qty = stoi(splits[n-2]);
     now.line = line;
     stock current;
-    for (int i = prevT; i < stoi(splits[0]); i++) for (auto itr = stocks.begin(); !itr.isNull(); ++itr) itr.key().expire(i);
+
+    for (int i = prevT; i < stoi(splits[0]); i++) 
+        for (auto itr = stocks.begin(); !itr.isNull(); ++itr) 
+            itr.key().expire(i);
 
     if (n == 7) {
         current.name.push_back(splits[3]);
@@ -72,7 +72,8 @@ int market::split(string message, int prevT, int line) {
         else itr.key().insert(now, stoi(splits[n-1]), 1);
     }
 
-    for (auto itr = stocks.begin(); !itr.isNull(); ++itr) itr.key().transact(peoples, netExchange, numTrades, numSharedTrades);
+    for (auto itr = stocks.begin(); !itr.isNull(); ++itr) 
+        itr.key().transact(peoples, netExchange, numTrades, numSharedTrades);
     return stoi(splits[0]);
 }
 
@@ -102,6 +103,7 @@ void market::start()
     cout << "Number of Completed Trades: " << numTrades << "\n";
     cout << "Number of Shares Traded: " << numSharedTrades << "\n";
     for (auto itr = peoples.begin(); !itr.isNull(); itr++) {
-        cout << itr.key() << " bought " << itr.val().bought << " and sold " << itr.val().sold << " for a net transfer of $" << itr.val().obtained << "\n";
+        cout << itr.key() << " bought " << itr.val().bought << " and sold " << 
+            itr.val().sold << " for a net transfer of $" << itr.val().obtained << "\n";
     }
 }

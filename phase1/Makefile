@@ -1,10 +1,11 @@
+# This uses environment CXX, CXXFLAGS and LDFLAGS variables. Add them if needed.
 all: trader iml
 
 trader: trader.cpp receiver.h
-	clang++ -fuse-ld=lld -g -fsanitize=undefined,address,leak,bounds -std=c++23 trader.cpp -o trader
+	$(CXX) $(CXXFLAGS) trader.cpp $(LDFLAGS) -o trader
 
 iml: iml.cpp
-	clang++ -fuse-ld=lld -g -fsanitize=undefined,address,leak,bounds -std=c++23 iml.cpp -o iml
+	$(CXX) $(CXXFLAGS) iml.cpp $(LDFLAGS) -o iml
 
 runpart1: iml trader
 	./trader 1 > output.txt &

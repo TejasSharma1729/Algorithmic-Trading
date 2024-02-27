@@ -1,7 +1,8 @@
 #include <iostream>
-#include <string>
-#include <vector>
-using namespace std;
+#include <concepts>
+#include <compare>
+#include <climits>
+// using namespace std;
 
 template <typename T, typename U>
 struct Pair {
@@ -12,10 +13,9 @@ struct Pair {
     bool operator == (Pair& B) {
         return (first == B.first && second == B.second);
     }
-    bool operator < (Pair& B) {
-        if (first < B.first) return true;
-        if (first == B.first) return (second < B.second);
-        return false;
+    std::strong_ordering operator <=> (const Pair& B) const {
+        if (first != B.first) return (first <=> B.first);
+        return (second <=> B.second);
     }
 };
 
@@ -76,7 +76,7 @@ private:
 // Map: the usual value_datatype;   Multimap: vector<value_datatype>, remove if empty, first insertion add element.
 */
 
-template <typename T, typename U>
+template <std::totally_ordered T, typename U>
 class dict {
 private:
 template <typename V>
@@ -144,7 +144,7 @@ template <typename V>
 				if (right != nullptr) right->parent = this;
 			}
 			else {
-				throw invalid_argument("\nSide to Elevate in Rotation: -1(Left) or +1(Right)");
+				throw std::invalid_argument("\nSide to Elevate in Rotation: -1(Left) or +1(Right)");
 			}
 		}
 
@@ -162,7 +162,7 @@ template <typename V>
 
 		rbNode* insert(Pair<T, U> data) {
 			if (data.first == key) 
-			throw invalid_argument("\nDuplicate Entries Error");
+			throw std::invalid_argument("\nDuplicate Entries Error");
 			if (data.first < key) {
 				if (left == nullptr) {
 					left = new rbNode(data.first, data.second);
@@ -274,11 +274,11 @@ template <typename V>
 			}
 			else if (k < key) {
 				if (left != nullptr) return left->remove(k);
-				else throw invalid_argument("\nDelete Nonexistant Key Error");
+				else throw std::invalid_argument("\nDelete Nonexistant Key Error");
 			}
 			else {
 				if (right != nullptr) return right->remove(k);
-				else throw invalid_argument("\nDelete Nonexistant Key Error");
+				else throw std::invalid_argument("\nDelete Nonexistant Key Error");
 			}
 		}
 
@@ -447,18 +447,30 @@ template <typename V>
 
 public:
 	dict() {root = nullptr; length = 0;}
-	dict(dict& Oth) {
+	dict(const dict& Oth) {
 		length = Oth.length;
 		if (root == nullptr || Oth.root == root) return; else root->destroy();
 		if (Oth.root != nullptr) root = Oth.root->copy();
 		else root = nullptr;
 	}
-	void operator = (dict& Oth) {
+	void operator = (const dict& Oth) {
 		length = Oth.length;
 		if (root == nullptr || Oth.root == root) return; else root->destroy();
 		if (Oth.root != nullptr) root = Oth.root->copy();
 		else root = nullptr;
 	}
+    dict(dict&& Oth) {
+        length = Oth.length;
+        root = Oth.root;
+        Oth.length = 0;
+        Oth.root = nullptr;
+    }
+    void operator = (dict&& Oth) {
+        length = Oth.length;
+        root = Oth.root;
+        Oth.length = 0;
+        Oth.root = nullptr;
+    }
 	~dict() {
 		if (root != nullptr) root->destroy();
 		root = nullptr;
@@ -604,9 +616,9 @@ public:
 	};
 
 	U at(T key) {
-		if (root == nullptr) throw invalid_argument("\nNot Found Error");
+		if (root == nullptr) throw std::invalid_argument("\nNot Found Error");
 		rbNode* val = (root->find(key));
-		if (val == nullptr) throw invalid_argument("\nNot Found Error");
+		if (val == nullptr) throw std::invalid_argument("\nNot Found Error");
 		return *val;
 	}
 
@@ -661,7 +673,7 @@ public:
 
 	U remove(T key) {
 		if (root == nullptr) 
-			throw invalid_argument("\nDelete Nonexistant Key Error");
+			throw std::invalid_argument("\nDelete Nonexistant Key Error");
 		Tuple<rbNode> temp = root->remove(key);
 		length--;
 		if (temp.third == 2) root = temp.first;
