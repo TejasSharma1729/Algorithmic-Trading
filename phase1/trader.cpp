@@ -218,7 +218,8 @@ void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8
 		for (int j = 0; j < (int)stocks.size(); j++) {
 			if (j != 0 && T->val.first[j] != people->val.first[j]) flags = 0;
 			if (T->val.first[j] + people->val.first[j] != 0) cancel = 0;
-			if (T->val.second + people->val.second != 1) cancel = 0; // One buy and one sell only.
+			if (T->val.second + people->val.second != 1) cancel = 0; 
+            // One buy and one sell only.
 		}
 		if (flags == 1 && people->val.second == T->val.second) {
 			// Both buy or sell: the first one is less efficient than second.
@@ -269,7 +270,8 @@ void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8
 	bool flags = 0;
 	int m = stocks.size();
 	vector<uint8_t> included(peps, 0); 
-	// The person new will always be there. If not then this arbitrage would have been caught earlier.
+	// The person new will always be there. 
+    // If not then this arbitrage would have been caught earlier.
 	included[0] = 1;
 	vector<uint8_t> maxIncl(peps, 0);
 	int maxProfit = 0;
@@ -301,14 +303,14 @@ void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8
 	if (maxProfit > 0) {
 		int i = 0;
 		T = people;
-		ptr<Pair<vector<int>, int8_t>> prev = nullptr;
+		ptr<Pair<vector<int>, int8_t>> prev_temp = nullptr;
 		U = nullptr;
 		V = orders;
 
 		while (T != nullptr) {
 			if (maxIncl[i] == 1) {
 				peps--;
-				if (prev == nullptr) {
+				if (prev_temp == nullptr) {
 					people = people->next;
 					orders = orders->next;
 					delete T;
@@ -319,16 +321,16 @@ void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8
 				}
 				else {
 					U->next = V->next;
-					prev->next = T->next;
+					prev_temp->next = T->next;
 					cout << V->val.substr(0, V->val.size() - 1) << "\n";
 					delete V;
 					delete T;
-					T = prev->next;
+					T = prev_temp->next;
 					V = U->next;
 				}
 			}
 			else {
-				prev = T;
+				prev_temp = T;
 				U = V;
 				T = T->next;
 				V = V->next;
@@ -343,7 +345,8 @@ void arbitrage(string message, vector<stock>& stocks, ptr<Pair<vector<int>, int8
 	}
 }
 
-void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>& names,  int& FinalProfit) {
+void orderBook(string order, DICT_T& linComb, VECT_ORD& history,
+        vector<string>& names,  int& FinalProfit) {
 	vector<int> current(names.size(), 0);
 	int price = 0;
 	int qty = 0;
@@ -390,7 +393,8 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 		auto& Dict_J = itr.val().first;
 		auto& Dict_K = itr.val().second;
 		int x = 0;
-		// NOTATION: x < 0 means something we take buy orders. x > 0 means something we take sell orders.
+		// NOTATION: x < 0 means something we take buy orders. 
+        // x > 0 means something we take sell orders.
 
 		while (true) {
 			profits[i][x] = 0;
@@ -479,16 +483,18 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 		int impliedProfit = 0;
 
 		int i = 0;
-		auto itr = linComb.begin();
+		itr = linComb.begin();
 		while (i < (int)linComb.size())
 		{
 			impliedProfit += profits[i][thisComb[i]];
-			for (int j = 0; j < (int)names.size(); j++) implication[j] += thisComb[i]*itr.key()[j];
+			for (int j = 0; j < (int)names.size(); j++)
+                implication[j] += thisComb[i]*itr.key()[j];
 			++itr; i++;
 		}
 		bool acceptable = 1;
 
-		for (int j = 0; j < (int)names.size(); j++) if (implication[j] != 0) acceptable = 0;
+		for (int j = 0; j < (int)names.size(); j++) 
+            if (implication[j] != 0) acceptable = 0;
 		if (acceptable && mainProfit < impliedProfit) {
 			mainProfit = impliedProfit;
 			finale = thisComb;
@@ -508,7 +514,7 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 	}
 	FinalProfit += mainProfit;
 	for (int i = (int)history.size() - 1; i >= 0; i--) {
-		auto itr = linComb.begin();
+		itr = linComb.begin();
 		int j = 0;
 		while (!itr.isNull()) 
 		{
@@ -522,7 +528,9 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 					while (!ktr.isNull()) {
 						if (y + ktr.val() <= -finale[j]) {
 							y += ktr.val();
-							if (ktr.val() > 0) cout << history[i].second << ktr.key() << " " << ktr.val() << " s\n";
+							if (ktr.val() > 0) 
+                                cout << history[i].second << ktr.key() << " " 
+                                    << ktr.val() << " s\n";
 							auto ltr = ktr;
 							--ktr;
 							Dict_K.remove(ltr.key());
@@ -539,24 +547,32 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 							if (kIn >= ktr.val()) {
 								auto ltr = ktr;
 								ktr--; kIn = 0;
-								if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " s\n";
+								if (ltr.val() > 0) 
+                                    cout << history[i].second << ltr.key() << " " << 
+                                        ltr.val() << " s\n";
 								Dict_K.remove(ltr.key());
 							}
 							jIn++;
 							if (jIn >= jtr.val()) {
 								auto ltr = jtr;
 								jtr++; jIn = 0;
-								if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " b\n";
+								if (ltr.val() > 0) 
+                                    cout << history[i].second << ltr.key() << " " << 
+                                        ltr.val() << " b\n";
 								Dict_J.remove(ltr.key());
 							}
 						}
 						if (!jtr.isNull()) {
-							if (jIn > 0) cout << history[i].second << jtr.key() << " " << jIn << " b\n";
+							if (jIn > 0) 
+                                cout << history[i].second << jtr.key() << " " <<
+                                    jIn << " b\n";
 							jtr.val() -= jIn;
 							if (jtr.val() == 0) Dict_J.remove(jtr.key());
 						}
 						if (!ktr.isNull()) {
-							if (kIn > 0) cout << history[i].second << ktr.key() << " " << kIn << " s\n";
+							if (kIn > 0) 
+                                cout << history[i].second << ktr.key() << " " <<
+                                    kIn << " s\n";
 							ktr.val() -= kIn;
 							if (ktr.val() == 0) Dict_K.remove(ktr.key());
 						}
@@ -568,7 +584,9 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 					while (!jtr.isNull()) {
 						if (y + jtr.val() <= finale[j]) {
 							y += jtr.val();
-							if (jtr.val() > 0) cout << history[i].second << jtr.key() << " " << jtr.val() << " b\n";
+							if (jtr.val() > 0) 
+                                cout << history[i].second << jtr.key() << " " << 
+                                    jtr.val() << " b\n";
 							auto ltr = jtr;
 							++jtr;
 							Dict_J.remove(ltr.key());
@@ -585,24 +603,32 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 							if (kIn >= ktr.val()) {
 								auto ltr = ktr;
 								ktr--; kIn = 0;
-								if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " s\n";
+								if (ltr.val() > 0) 
+                                    cout << history[i].second << ltr.key() << " " << 
+                                        ltr.val() << " s\n";
 								Dict_K.remove(ltr.key());
 							}
 							jIn++;
 							if (jIn >= jtr.val()) {
 								auto ltr = jtr;
 								jtr++; jIn = 0;
-								if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " b\n";
+								if (ltr.val() > 0) 
+                                    cout << history[i].second << ltr.key() << " " << 
+                                        ltr.val() << " b\n";
 								Dict_J.remove(ltr.key());
 							}
 						}
 						if (!jtr.isNull()) {
-							if (jIn > 0) cout << history[i].second << jtr.key() << " " << jIn << " b\n";
+							if (jIn > 0) 
+                                cout << history[i].second << jtr.key() << " " << 
+                                    jIn << " b\n";
 							jtr.val() -= jIn;
 							if (jtr.val() == 0) Dict_J.remove(jtr.key());
 						}
 						if (!ktr.isNull()) {
-							if (kIn > 0) cout << history[i].second << ktr.key() << " " << kIn << " s\n";
+							if (kIn > 0) 
+                                cout << history[i].second << ktr.key() << " " << 
+                                    kIn << " s\n";
 							ktr.val() -= kIn;
 							if (ktr.val() == 0) Dict_K.remove(ktr.key());
 						}
@@ -618,24 +644,32 @@ void orderBook(string order, DICT_T& linComb, VECT_ORD& history, vector<string>&
 						if (kIn >= ktr.val()) {
 							auto ltr = ktr;
 							ktr--; kIn = 0;
-							if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " s\n";
+							if (ltr.val() > 0) 
+                                cout << history[i].second << ltr.key() << " " << 
+                                    ltr.val() << " s\n";
 							Dict_K.remove(ltr.key());
 						}
 						jIn++;
 						if (jIn >= jtr.val()) {
 							auto ltr = jtr;
 							jtr++; jIn = 0;
-							if (ltr.val() > 0) cout << history[i].second << ltr.key() << " " << ltr.val() << " b\n";
+							if (ltr.val() > 0) 
+                                cout << history[i].second << ltr.key() << " " << 
+                                    ltr.val() << " b\n";
 							Dict_J.remove(ltr.key());
 						}
 					}
 					if (!jtr.isNull()) {
-						if (jIn > 0) cout << history[i].second << jtr.key() << " " << jIn << " b\n";
+						if (jIn > 0) 
+                            cout << history[i].second << jtr.key() << " " << 
+                                jIn << " b\n";
 						jtr.val() -= jIn;
 						if (jtr.val() == 0) Dict_J.remove(jtr.key());
 					}
 					if (!ktr.isNull()) {
-						if (kIn > 0) cout << history[i].second << ktr.key() << " " << kIn << " s\n";
+						if (kIn > 0) 
+                            cout << history[i].second << ktr.key() << " " << 
+                                kIn << " s\n";
 						ktr.val() -= kIn;
 						if (ktr.val() == 0) Dict_K.remove(ktr.key());
 					}
@@ -680,25 +714,34 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 		
-		while (i < (int)message.length() && (message[i] != 13 || message[i] == 0 || message[i] == 10)) order += message[i++];
+		while (i < (int)message.length() && (
+                    message[i] != 13 || message[i] == 0 || message[i] == 10)) 
+            order += message[i++];
 		if (message[i] != 13 && message[i] != 0 && message[i] != 10) {
 			message = "";
 			continue;
 		}
 		if (i > 0 && message[i-1] == '$') {
 			flags = 0;
-			if (i == 1 || message[i-2] == 13 || message[i-2] == 0 || message[i-2] == 10) break;
+			if (i == 1 || 
+                    message[i-2] == 13 || message[i-2] == 0 || message[i-2] == 10) 
+                break;
 		}
 		if (message[i] == 13 || message[i] == 0 || message[i] == 10) 
 		{
 			if (order != "" && (order.back() == '#' || order.back() == '$')) {
-				if (argv[1][0] == '1') buyLowSellHigh(order, stocksLowHigh);
-				else if (argv[1][0] == '2') arbitrage(order, stocksArbitrage, people, orders, FinalProfit, peps);
-				else if (argv[1][0] == '3') orderBook(order, linComb, history, names, FinalProfit); // You can add parameters
+				if (argv[1][0] == '1') 
+                    buyLowSellHigh(order, stocksLowHigh);
+				else if (argv[1][0] == '2') 
+                    arbitrage(order, stocksArbitrage, people, orders, FinalProfit, peps);
+				else if (argv[1][0] == '3') 
+                    orderBook(order, linComb, history, names, FinalProfit); 
 				else cout << order << "\n";
                 order = "";
 			}
-			while (i < (int)message.length() && (message[i] == 13 || message[i] == 0 || message[i] == 10)) i++;
+			while (i < (int)message.length() && (
+                        message[i] == 13 || message[i] == 0 || message[i] == 10)) 
+                i++;
 			if (i >= (int)message.length()) {
 				message = "";
 				continue;
@@ -708,6 +751,7 @@ int main(int argc, char* argv[]) {
 		message = rcv.readIML();
 		i = 0;
 	}
-	if (argv[1][0] == '2' || argv[1][0] == '3') cout << FinalProfit << "\n";
+	if (argv[1][0] == '2' || argv[1][0] == '3') 
+        cout << FinalProfit << "\n";
 	rcv.terminate();
 }

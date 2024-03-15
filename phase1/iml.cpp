@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
     std::ifstream inputFile(filepath); 
 
     char buffer[BUFFER_SIZE];
+    bzero(buffer, BUFFER_SIZE);
     int bytesSent;
     std::string message;
 
