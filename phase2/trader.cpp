@@ -171,7 +171,7 @@ int trader(std::string *message)
                 ((long)Trader::withMe[stockName] + buyOrd);
         }
         else {
-            string num = "";
+            num = "";
             while (order[i] != ' ') num += order[i++];
             i++;
             int n = stoi(num);
@@ -193,17 +193,17 @@ int trader(std::string *message)
 
     if (buyOrd == 1) {
         if (price < Trader::medianPrices[current].median()) {
-            for (int i = 0; i < (int)current.name.size(); i++) 
+            for (int k = 0; k < (int)current.name.size(); k++) 
             {
-                squareNow -= (long)Trader::withMe[current.name[i]] * 
-                    Trader::withMe[current.name[i]];
-                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
-                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
-                Trader::withMe[current.name[i]] += current.quant[i]*quantity;
-                squareNow += (long)Trader::withMe[current.name[i]] * 
-                    Trader::withMe[current.name[i]];
-                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
-                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+                squareNow -= (long)Trader::withMe[current.name[k]] * 
+                    Trader::withMe[current.name[k]];
+                squareDiff -= ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]) * 
+                    ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]);
+                Trader::withMe[current.name[k]] += current.quant[k]*quantity;
+                squareNow += (long)Trader::withMe[current.name[k]] * 
+                    Trader::withMe[current.name[k]];
+                squareDiff += ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]) * 
+                    ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]);
             }
 			string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + 
                 " " + to_string(retTime) + "\r";
@@ -218,17 +218,17 @@ int trader(std::string *message)
     else {
         if (Trader::medianPrices[current].median() != numeric_limits<int>::min() && 
                 price > Trader::medianPrices[current].median()) {
-            for (int i = 0; i < (int)current.name.size(); i++) 
+            for (int k = 0; k < (int)current.name.size(); k++) 
             {
-                squareNow += (long)Trader::withMe[current.name[i]] * 
-                    Trader::withMe[current.name[i]];
-                squareDiff += ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
-                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
-                Trader::withMe[current.name[i]] -= current.quant[i]*quantity;
-                squareNow -= (long)Trader::withMe[current.name[i]] * 
-                    Trader::withMe[current.name[i]];
-                squareDiff -= ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]) * 
-                    ((long)Trader::withMe[current.name[i]] + buyOrd*current.quant[i]);
+                squareNow += (long)Trader::withMe[current.name[k]] * 
+                    Trader::withMe[current.name[k]];
+                squareDiff += ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]) * 
+                    ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]);
+                Trader::withMe[current.name[k]] -= current.quant[k]*quantity;
+                squareNow -= (long)Trader::withMe[current.name[k]] * 
+                    Trader::withMe[current.name[k]];
+                squareDiff -= ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]) * 
+                    ((long)Trader::withMe[current.name[k]] + buyOrd*current.quant[k]);
             }
             string print = outPut + "$" + to_string(price) + " #" + to_string(quantity) + 
                 " " + to_string(retTime) + "\r";
@@ -281,11 +281,11 @@ int trader(std::string *message)
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) 
+                for (int k = 0; k < (int)current.name.size(); k++) 
                 {
-                    int x = Trader::withMe[current.name[i]] + current.quant[i];
-                    squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
-                    Trader::withMe[current.name[i]] = x;
+                    int x = Trader::withMe[current.name[k]] + current.quant[k];
+                    squareDiff += (x + current.quant[k]) * (x + current.quant[k]);
+                    Trader::withMe[current.name[k]] = x;
                 }
             }
             if (!itr.isNull()) 
@@ -330,11 +330,11 @@ int trader(std::string *message)
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) 
+                for (int k = 0; k < (int)current.name.size(); k++) 
                 {
-                    int x = Trader::withMe[current.name[i]] - current.quant[i];
-                    squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
-                    Trader::withMe[current.name[i]] = x;
+                    int x = Trader::withMe[current.name[k]] - current.quant[k];
+                    squareDiff += (x - current.quant[k]) * (x - current.quant[k]);
+                    Trader::withMe[current.name[k]] = x;
                 }
             }
             if (!jtr.isNull()) 
@@ -349,11 +349,11 @@ int trader(std::string *message)
     }
     else {
         squareDiff = 0;
-        for (int i = 0; i < (int)current.name.size(); i++) 
+        for (int k = 0; k < (int)current.name.size(); k++) 
         {
-            int x = Trader::withMe[current.name[i]] - current.quant[i];
-            squareDiff += (x - buyOrd*current.quant[i]) * (x - buyOrd*current.quant[i]);
-            Trader::withMe[current.name[i]] = x;
+            int x = Trader::withMe[current.name[k]] - current.quant[k];
+            squareDiff += (x - buyOrd*current.quant[k]) * (x - buyOrd*current.quant[k]);
+            Trader::withMe[current.name[k]] = x;
         }
         if (buyOrd == 1) {
             while (!jtr.isNull() && squareDiff < squareNow) 
@@ -388,11 +388,11 @@ int trader(std::string *message)
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) 
+                for (int k = 0; k < (int)current.name.size(); k++) 
                 {
-                    int x = Trader::withMe[current.name[i]] - current.quant[i];
-                    squareDiff += (x - current.quant[i]) * (x - current.quant[i]);
-                    Trader::withMe[current.name[i]] = x;
+                    int x = Trader::withMe[current.name[k]] - current.quant[k];
+                    squareDiff += (x - current.quant[k]) * (x - current.quant[k]);
+                    Trader::withMe[current.name[k]] = x;
                 }
             }
             if (!jtr.isNull()) 
@@ -437,11 +437,11 @@ int trader(std::string *message)
                 }
                 squareNow = squareDiff;
                 squareDiff = 0;
-                for (int i = 0; i < (int)current.name.size(); i++) 
+                for (int k = 0; k < (int)current.name.size(); k++) 
                 {
-                    int x = Trader::withMe[current.name[i]] + current.quant[i];
-                    squareDiff += (x + current.quant[i]) * (x + current.quant[i]);
-                    Trader::withMe[current.name[i]] = x;
+                    int x = Trader::withMe[current.name[k]] + current.quant[k];
+                    squareDiff += (x + current.quant[k]) * (x + current.quant[k]);
+                    Trader::withMe[current.name[k]] = x;
                 }
             }
             if (!itr.isNull()) 

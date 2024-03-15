@@ -28,9 +28,9 @@ int market::split(string message, int prevT, int line) {
     now.line = line;
     stock current;
 
-    for (int i = prevT; i < stoi(splits[0]); i++) 
+    for (int j = prevT; j < stoi(splits[0]); j++) 
         for (auto itr = stocks.begin(); !itr.isNull(); ++itr) 
-            itr.key().expire(i);
+            itr.key().expire(j);
 
     if (n == 7) {
         current.name.push_back(splits[3]);
@@ -38,10 +38,10 @@ int market::split(string message, int prevT, int line) {
         current.numTransacted = 1;
     }
     else {
-        for (int i = 3; i < n-4; i += 2) {
-            current.name.push_back(splits[i]);
-            current.quant.push_back(stoi(splits[i+1]));
-            current.numTransacted += stoi(splits[i+1]);
+        for (int j = 3; j < n-4; j += 2) {
+            current.name.push_back(splits[j]);
+            current.quant.push_back(stoi(splits[j+1]));
+            current.numTransacted += stoi(splits[j+1]);
         }
     }
     auto itr = stocks.find(current);
@@ -67,13 +67,13 @@ int market::split(string message, int prevT, int line) {
     }
     else {
         stocks[current] = false;
-        auto itr = stocks.find(current);
-        if (splits[2][0] == 'B') itr.key().insert(now, stoi(splits[n-1]), 0);
-        else itr.key().insert(now, stoi(splits[n-1]), 1);
+        auto jtr = stocks.find(current);
+        if (splits[2][0] == 'B') jtr.key().insert(now, stoi(splits[n-1]), 0);
+        else jtr.key().insert(now, stoi(splits[n-1]), 1);
     }
 
-    for (auto itr = stocks.begin(); !itr.isNull(); ++itr) 
-        itr.key().transact(peoples, netExchange, numTrades, numSharedTrades);
+    for (auto jtr = stocks.begin(); !jtr.isNull(); ++jtr) 
+        jtr.key().transact(peoples, netExchange, numTrades, numSharedTrades);
     return stoi(splits[0]);
 }
 

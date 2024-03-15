@@ -118,8 +118,8 @@ class market
 			}
 		}
 
-		void transact(dict<string, personOrders>& peoples, 
-                long& netExchange, int& numTrades, long& numSharedTrades) {
+		void transact(dict<string, personOrders>& peoples_parent, 
+                long& netExchange_parent, int& numTrades_parent, long& numSharedTrades_parent) {
 			vector<order> bought;
 			vector<order> sold;
 			auto itr = bookBuy.end();
@@ -140,15 +140,15 @@ class market
                             " for $" << 1.0*price/numTransacted << "/share\n";
 						bought.push_back(itr.key());
 
-						auto& A = peoples[itr.key().person];
+						auto& A = peoples_parent[itr.key().person];
 						A.bought += numTransacted*q1;
 						A.obtained -= price*q1;
-						auto& B = peoples[jtr.key().person];
+						auto& B = peoples_parent[jtr.key().person];
 						B.sold += numTransacted*q1;
 						B.obtained += price*q1;
-						netExchange += price*q1;
-						numTrades++;
-						numSharedTrades += numTransacted*q1;
+						netExchange_parent += price*q1;
+						numTrades_parent++;
+						numSharedTrades_parent += numTransacted*q1;
 
 						auto ktr = timeExpSell.find(jtr.val());
 						
@@ -167,15 +167,15 @@ class market
                             " for $" << 1.0*price/numTransacted << "/share\n";
 						sold.push_back(jtr.key());
 
-						auto& A = peoples[itr.key().person];
+						auto& A = peoples_parent[itr.key().person];
 						A.bought += numTransacted*q2;
 						A.obtained -= price*q2;
-						auto& B = peoples[jtr.key().person];
+						auto& B = peoples_parent[jtr.key().person];
 						B.sold += numTransacted*q2;
 						B.obtained += price*q2;
-						netExchange += price*q2;
-						numTrades++;
-						numSharedTrades += numTransacted*q2;
+						netExchange_parent += price*q2;
+						numTrades_parent++;
+						numSharedTrades_parent += numTransacted*q2;
 
 						auto ktr = timeExpBuy.find(itr.val());
 						int x = itr.key().qty - q2;
@@ -190,15 +190,15 @@ class market
 						cout << " from " << jtr.key().person << 
                             " for $" << 1.0*price/numTransacted << "/share\n";
 
-						auto& A = peoples[itr.key().person];
+						auto& A = peoples_parent[itr.key().person];
 						A.bought += numTransacted*q1;
 						A.obtained -= price*q1;
-						auto& B = peoples[jtr.key().person];
+						auto& B = peoples_parent[jtr.key().person];
 						B.sold += numTransacted*q1;
 						B.obtained += price*q1;
-						netExchange += price*q1;
-						numTrades++;
-						numSharedTrades += numTransacted*q1;
+						netExchange_parent += price*q1;
+						numTrades_parent++;
+						numSharedTrades_parent += numTransacted*q1;
 
 						bought.push_back(itr.key());
 						sold.push_back(jtr.key());
